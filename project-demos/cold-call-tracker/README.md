@@ -4,6 +4,10 @@ Web application created using [Ivy](https://github.com/Ivy-Interactive/Ivy).
 
 Ivy is a web framework for building interactive web applications using C# and .NET.
 
+## Description
+
+Cold Call Tracker is a web application for managing and tracking cold call leads with integration to Exa.ai websets API for company data and contact information.
+
 ## Run
 
 ```
