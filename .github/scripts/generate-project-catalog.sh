@@ -48,15 +48,16 @@ extract_description() {
         [ "$in_code_block" = true ] && continue
         
         # Look for Description heading (case-insensitive, supports # or ##)
-        if [[ "$line" =~ ^#+\s+[Dd]escription ]]; then
+        # Use case-insensitive matching
+        if echo "$line" | grep -qiE '^#+\s+Description'; then
             found_description=true
             continue
         fi
         
         # If we found Description heading, collect text until next heading
         if [ "$found_description" = true ]; then
-            # Stop at next heading
-            if [[ "$line" =~ ^#+\s+ ]]; then
+            # Stop at next heading (but not if it's still Description with different case)
+            if echo "$line" | grep -qE '^#+\s+' && ! echo "$line" | grep -qiE '^#+\s+Description'; then
                 break
             fi
             
