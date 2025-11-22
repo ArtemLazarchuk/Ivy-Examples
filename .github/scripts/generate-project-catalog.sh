@@ -34,10 +34,9 @@ extract_description() {
         return
     fi
     
-    # Read README and find first meaningful paragraph after title
-    # Skip badges, images, code blocks, and empty lines
+    # First, try to find "Description" heading and extract text after it
     local in_code_block=false
-    local found_title=false
+    local found_description=false
     local description=""
     
     while IFS= read -r line || [ -n "$line" ]; do
@@ -48,68 +47,51 @@ extract_description() {
         fi
         [ "$in_code_block" = true ] && continue
         
-        # Skip title
-        if [[ "$line" =~ ^# ]]; then
-            found_title=true
+        # Look for Description heading (case-insensitive, supports # or ##)
+        if [[ "$line" =~ ^#+\s+[Dd]escription ]]; then
+            found_description=true
             continue
         fi
         
-        # Skip images, badges, empty lines, and markdown links at start
-        if [[ "$line" =~ ^!\[.*\] ]] || \
-           [[ "$line" =~ ^\[!\[.*\] ]] || \
-           [[ "$line" =~ ^\<img ]] || \
-           [[ "$line" =~ ^\[Open\ in ]] || \
-           [[ -z "${line// }" ]] || \
-           [[ "$line" =~ ^Click\ the\ badge ]]; then
-            continue
-        fi
-        
-        # Skip "Created Using Ivy" section and similar boilerplate
-        if [[ "$line" =~ Created\ Using\ Ivy ]] || \
-           [[ "$line" =~ ^\*\*Ivy\*\* ]] || \
-           [[ "$line" =~ ^Ivy\ is\ a\ web\ framework ]]; then
-            continue
-        fi
-        
-        # If we found title and this is a meaningful line, use it
-        if [ "$found_title" = true ] && [ -n "$line" ]; then
+        # If we found Description heading, collect text until next heading
+        if [ "$found_description" = true ]; then
+            # Stop at next heading
+            if [[ "$line" =~ ^#+\s+ ]]; then
+                break
+            fi
+            
+            # Skip empty lines, images, badges
+            if [[ -z "${line// }" ]] || \
+               [[ "$line" =~ ^!\[.*\] ]] || \
+               [[ "$line" =~ ^\[!\[.*\] ]] || \
+               [[ "$line" =~ ^\<img ]] || \
+               [[ "$line" =~ ^\[Open\ in ]]; then
+                continue
+            fi
+            
             # Remove markdown formatting but keep text
-            line=$(echo "$line" | sed 's/\[\([^]]*\)\]([^)]*)/\1/g' | sed 's/\*\*//g' | sed 's/\*//g')
-            # Stop at section headers or if we have enough content
-            if [[ "$line" =~ ^## ]]; then
-                break
-            fi
-            if [ ${#description} -gt 0 ]; then
-                description="$description $line"
-            else
-                description="$line"
-            fi
-            # If we have a good description (at least 50 chars), break
-            if [ ${#description} -ge 50 ]; then
-                break
+            line=$(echo "$line" | sed 's/\[\([^]]*\)\]([^)]*)/\1/g' | sed 's/\*\*//g' | sed 's/\*//g' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            
+            if [ -n "$line" ]; then
+                if [ ${#description} -gt 0 ]; then
+                    description="$description $line"
+                else
+                    description="$line"
+                fi
             fi
         fi
     done < "$readme_file"
     
+    # If Description heading was not found, return empty string
+    if [ "$found_description" = false ]; then
+        echo ""
+        return
+    fi
+    
     # Clean up description
     description=$(echo "$description" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed 's/[[:space:]]\+/ /g')
     
-    # If description is too short, try to get first paragraph after "What This Application Does" or similar
-    if [ ${#description} -lt 30 ]; then
-        description=$(awk '/What This Application Does|This example demonstrates|This specific implementation/ {
-            getline
-            while (getline > 0 && !/^##|^#/) {
-                if (length($0) > 10 && !/^[[:space:]]*$/) {
-                    gsub(/\[([^\]]+)\]\([^)]+\)/, "\\1", $0)
-                    gsub(/\*\*/, "", $0)
-                    gsub(/\*/, "", $0)
-                    print $0
-                    if (length($0) > 50) break
-                }
-            }
-        }' "$readme_file" | head -n 3 | tr '\n' ' ' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-    fi
-    
+    # Return the description (even if empty, if Description section exists but is empty)
     echo "$description"
 }
 

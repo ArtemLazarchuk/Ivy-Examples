@@ -21,6 +21,10 @@ Web application created using [Ivy-Framework](https://github.com/Ivy-Interactive
 
 Ivy is a web framework for building interactive web applications using C# and .NET.
 
+## Description
+
+OpperAI Chat is an AI-powered chat application with Opper.ai integration, featuring a custom C# SDK, model selection, and conversation context management.
+
 ## Interactive Example For AI Chat with Opper.ai
 
 This example demonstrates AI-powered chat functionality using [Opper.ai](https://docs.opper.ai) integrated with Ivy. Since Opper.ai doesn't have an official C# SDK, this example includes a complete implementation of the Opper.ai API client (OpperDotNet).
