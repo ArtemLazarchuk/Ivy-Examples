@@ -2,7 +2,7 @@
   "project-demos": [
     {
       "name": "Hello",
-      "description": "",
+      "description": "Cold Call Tracker is a web application for managing and tracking cold call leads with integration to Exa.ai websets API for company data and contact information.",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/cold-call-tracker",
       "deploymentLink": "ivy-projectdemos-cold-call-tracker.sliplane.app",
       "tags": [
@@ -11,7 +11,7 @@
     },
     {
       "name": "Course-template",
-      "description": "",
+      "description": "Course Template is a template for creating interactive online courses by automatically converting Markdown files into interactive course pages with navigation and structured content.",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/course-template",
       "deploymentLink": "ivy-projectdemos-course-template.sliplane.app",
       "tags": [
@@ -20,7 +20,7 @@
     },
     {
       "name": "Vc",
-      "description": "",
+      "description": "CRM-VC is a Customer Relationship Management system for venture capital firms with dashboard analytics, startup management, and investment deal tracking.",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/crm-vc",
       "deploymentLink": "ivy-projectdemos-crm-vc.sliplane.app",
       "tags": [
@@ -33,7 +33,7 @@
     },
     {
       "name": "DataTables Demo",
-      "description": "",
+      "description": "DataTables Demo showcases Ivy's DataTable widget with high-performance data handling, sorting, filtering, and support for large datasets using Apache Arrow.",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/datatables-demo",
       "deploymentLink": "ivy-projectdemos-datatables-demo.sliplane.app",
       "tags": [
@@ -42,7 +42,7 @@
     },
     {
       "name": "Hello",
-      "description": "",
+      "description": "Hello World is a minimal starter application demonstrating the basic structure and setup of an Ivy Framework application.",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/helloworld",
       "deploymentLink": "ivy-projectdemos-helloworld.sliplane.app",
       "tags": [
@@ -51,7 +51,7 @@
     },
     {
       "name": "OpperAI Chat",
-      "description": "",
+      "description": "OpperAI Chat is an AI-powered chat application with Opper.ai integration, featuring a custom C# SDK, model selection, and conversation context management.",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/opperai",
       "deploymentLink": "ivy-projectdemos-opperai.sliplane.app",
       "tags": [
@@ -61,7 +61,7 @@
     },
     {
       "name": "RentalBackOffice",
-      "description": "",
+      "description": "Rental Back Office is a property rental management system for managing properties, tenants, leases, payments, and maintenance requests.",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/rental-back-office",
       "deploymentLink": "ivy-projectdemos-rental-back-office.sliplane.app",
       "tags": [
