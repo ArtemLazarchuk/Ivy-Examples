@@ -34,64 +34,77 @@ extract_description() {
         return
     fi
     
-    # First, try to find "Description" heading and extract text after it
-    local in_code_block=false
-    local found_description=false
-    local description=""
-    
-    while IFS= read -r line || [ -n "$line" ]; do
-        # Skip code blocks
-        if [[ "$line" =~ ^\`\`\` ]]; then
-            in_code_block=$([ "$in_code_block" = false ] && echo true || echo false)
-            continue
-        fi
-        [ "$in_code_block" = true ] && continue
-        
-        # Look for Description heading (case-insensitive, supports # or ##)
-        if [[ "$line" =~ ^#+\s+[Dd]escription ]]; then
-            found_description=true
-            continue
-        fi
-        
-        # If we found Description heading, collect text until next heading
-        if [ "$found_description" = true ]; then
-            # Stop at next heading
-            if [[ "$line" =~ ^#+\s+ ]]; then
-                break
-            fi
+    # Use awk to extract description after "Description" heading until next heading or end of file
+    local description=$(awk '
+        BEGIN { 
+            in_description = 0
+            in_code_block = 0
+            found_description = 0
+        }
+        /^```/ { 
+            in_code_block = !in_code_block
+            if (in_description && !in_code_block) {
+                # Continue reading after code block
+            }
+            next
+        }
+        in_code_block { 
+            # Skip code block content
+            next
+        }
+        /^#+\s+[Dd]escription/ { 
+            in_description = 1
+            found_description = 1
+            next
+        }
+        in_description {
+            # Stop at next heading (any level, but not if it is still Description)
+            if (/^#+\s+/) {
+                # Check if this is another Description heading (different case)
+                if (!/^#+\s+[Dd]escription/) {
+                    exit
+                }
+            }
             
             # Skip empty lines, images, badges
-            if [[ -z "${line// }" ]] || \
-               [[ "$line" =~ ^!\[.*\] ]] || \
-               [[ "$line" =~ ^\[!\[.*\] ]] || \
-               [[ "$line" =~ ^\<img ]] || \
-               [[ "$line" =~ ^\[Open\ in ]]; then
-                continue
-            fi
+            if (/^[[:space:]]*$/) {
+                # Keep empty lines as space separators if we already have content
+                if (result != "") {
+                    result = result " "
+                }
+                next
+            }
+            if (/^!\[.*\]/) next
+            if (/^\[!\[.*\]/) next
+            if (/^<img/) next
+            if (/^\[Open in/) next
             
             # Remove markdown formatting but keep text
-            line=$(echo "$line" | sed 's/\[\([^]]*\)\]([^)]*)/\1/g' | sed 's/\*\*//g' | sed 's/\*//g' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            gsub(/\[([^\]]+)\]\([^)]+\)/, "\\1")
+            gsub(/\*\*/, "")
+            gsub(/\*/, "")
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "")
             
-            if [ -n "$line" ]; then
-                if [ ${#description} -gt 0 ]; then
-                    description="$description $line"
-                else
-                    description="$line"
-                fi
-            fi
-        fi
-    done < "$readme_file"
+            if (length($0) > 0) {
+                if (result != "") {
+                    result = result " " $0
+                } else {
+                    result = $0
+                }
+            }
+        }
+        END {
+            if (found_description) {
+                # Clean up: remove extra spaces
+                gsub(/[[:space:]]+/, " ", result)
+                gsub(/^[[:space:]]+|[[:space:]]+$/, "", result)
+                print result
+            } else {
+                print ""
+            }
+        }
+    ' "$readme_file")
     
-    # If Description heading was not found, return empty string
-    if [ "$found_description" = false ]; then
-        echo ""
-        return
-    fi
-    
-    # Clean up description
-    description=$(echo "$description" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed 's/[[:space:]]\+/ /g')
-    
-    # Return the description (even if empty, if Description section exists but is empty)
     echo "$description"
 }
 
