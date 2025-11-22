@@ -6,7 +6,10 @@
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/cold-call-tracker",
       "deploymentLink": "ivy-projectdemos-cold-call-tracker.sliplane.app",
       "tags": [
-        "demo"
+        "CRM",
+        "Sales",
+        "Lead Management",
+        "Cold Calling"
       ]
     },
     {
@@ -15,7 +18,12 @@
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/course-template",
       "deploymentLink": "ivy-projectdemos-course-template.sliplane.app",
       "tags": [
-        "demo"
+        "Education",
+        "Courses",
+        "Learning",
+        "Templates",
+        "Markdown",
+        "Content Management"
       ]
     },
     {
@@ -24,11 +32,13 @@
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/crm-vc",
       "deploymentLink": "ivy-projectdemos-crm-vc.sliplane.app",
       "tags": [
-        "Microsoft.EntityFrameworkCore",
-        "Microsoft.EntityFrameworkCore.Sqlite",
-        "Microsoft.EntityFrameworkCore.Sqlite.Design",
-        "Microsoft.EntityFrameworkCore.Tools",
-        "demo"
+        "CRM",
+        "Venture Capital",
+        "Startups",
+        "Investments",
+        "Dashboard",
+        "Analytics",
+        "Database"
       ]
     },
     {
@@ -37,7 +47,12 @@
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/datatables-demo",
       "deploymentLink": "ivy-projectdemos-datatables-demo.sliplane.app",
       "tags": [
-        "demo"
+        "Data Tables",
+        "Data Visualization",
+        "UI Components",
+        "Performance",
+        "Sorting",
+        "Filtering"
       ]
     },
     {
@@ -46,7 +61,10 @@
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/helloworld",
       "deploymentLink": "ivy-projectdemos-helloworld.sliplane.app",
       "tags": [
-        "demo"
+        "Getting Started",
+        "Tutorial",
+        "Beginner",
+        "Starter"
       ]
     },
     {
@@ -56,7 +74,11 @@
       "deploymentLink": "ivy-projectdemos-opperai.sliplane.app",
       "tags": [
         "AI",
-        "demo"
+        "Chat",
+        "Conversational AI",
+        "LLM",
+        "Natural Language Processing",
+        "API Integration"
       ]
     },
     {
@@ -65,7 +87,11 @@
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/rental-back-office",
       "deploymentLink": "ivy-projectdemos-rental-back-office.sliplane.app",
       "tags": [
-        "demo"
+        "Property Management",
+        "Real Estate",
+        "Rental",
+        "Back Office",
+        "Business Management"
       ]
     }
   ],
