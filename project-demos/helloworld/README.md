@@ -19,3 +19,7 @@ dotnet watch
 ```
 ivy deploy
 ```
+
+## Tags
+
+Getting Started, Tutorial, Beginner, Starter

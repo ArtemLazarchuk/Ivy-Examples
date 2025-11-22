@@ -20,3 +20,6 @@ dotnet watch
 ivy deploy
 ```
 
+## Tags
+
+Education, Courses, Learning, Templates, Markdown, Content Management

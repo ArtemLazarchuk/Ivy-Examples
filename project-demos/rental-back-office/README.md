@@ -19,3 +19,7 @@ dotnet watch
 ```
 ivy deploy
 ```
+
+## Tags
+
+Property Management, Real Estate, Rental, Back Office, Business Management

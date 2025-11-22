@@ -19,3 +19,7 @@ dotnet watch
 ```
 ivy deploy
 ```
+
+## Tags
+
+CRM, Venture Capital, Startups, Investments, Dashboard, Analytics, Database
