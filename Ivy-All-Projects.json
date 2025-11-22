@@ -2,7 +2,7 @@
   "project-demos": [
     {
       "name": "Hello",
-      "description": "Web application created using Ivy.",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/cold-call-tracker",
       "deploymentLink": "ivy-projectdemos-cold-call-tracker.sliplane.app",
       "tags": [
@@ -20,7 +20,7 @@
     },
     {
       "name": "Vc",
-      "description": "Web application created using Ivy.",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/crm-vc",
       "deploymentLink": "ivy-projectdemos-crm-vc.sliplane.app",
       "tags": [
@@ -33,7 +33,7 @@
     },
     {
       "name": "DataTables Demo",
-      "description": "This Ivy application demonstrates the powerful DataTable widget capabilities, showcasing different features and use cases.",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/datatables-demo",
       "deploymentLink": "ivy-projectdemos-datatables-demo.sliplane.app",
       "tags": [
@@ -42,7 +42,7 @@
     },
     {
       "name": "Hello",
-      "description": "Web application created using Ivy.",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/helloworld",
       "deploymentLink": "ivy-projectdemos-helloworld.sliplane.app",
       "tags": [
@@ -51,7 +51,7 @@
     },
     {
       "name": "OpperAI Chat",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/opperai",
       "deploymentLink": "ivy-projectdemos-opperai.sliplane.app",
       "tags": [
@@ -61,7 +61,7 @@
     },
     {
       "name": "RentalBackOffice",
-      "description": "Web application created using Ivy.",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/rental-back-office",
       "deploymentLink": "ivy-projectdemos-rental-back-office.sliplane.app",
       "tags": [
@@ -72,7 +72,7 @@
   "package-demos": [
     {
       "name": "HtmlAgilityPack",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/HtmlAgilityPack",
       "deploymentLink": "ivy-packagedemos-HtmlAgilityPack.sliplane.app",
       "tags": [
@@ -82,7 +82,7 @@
     },
     {
       "name": "Aspose.BarCode Generator",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/aspose-barcode",
       "deploymentLink": "ivy-packagedemos-aspose-barcode.sliplane.app",
       "tags": [
@@ -93,7 +93,7 @@
     },
     {
       "name": "Aspose.OCR Image-to-Text",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/aspose-ocr",
       "deploymentLink": "ivy-packagedemos-aspose-ocr.sliplane.app",
       "tags": [
@@ -104,7 +104,7 @@
     },
     {
       "name": "Aspose.Words",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/aspose-words",
       "deploymentLink": "ivy-packagedemos-aspose-words.sliplane.app",
       "tags": [
@@ -114,7 +114,7 @@
     },
     {
       "name": "BarcodeLib",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/barcodelib",
       "deploymentLink": "ivy-packagedemos-barcodelib.sliplane.app",
       "tags": [
@@ -125,7 +125,7 @@
     },
     {
       "name": "Bogus",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/bogus",
       "deploymentLink": "ivy-packagedemos-bogus.sliplane.app",
       "tags": [
@@ -135,7 +135,7 @@
     },
     {
       "name": "ClosedXML",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/closedxml",
       "deploymentLink": "ivy-packagedemos-closedxml.sliplane.app",
       "tags": [
@@ -146,7 +146,7 @@
     },
     {
       "name": "AWS Constructs",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/constructs",
       "deploymentLink": "ivy-packagedemos-constructs.sliplane.app",
       "tags": [
@@ -156,7 +156,7 @@
     },
     {
       "name": "Cronos",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/cronos",
       "deploymentLink": "ivy-packagedemos-cronos.sliplane.app",
       "tags": [
@@ -167,7 +167,7 @@
     },
     {
       "name": "CSV Helper",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/csvhelper",
       "deploymentLink": "ivy-packagedemos-csvhelper.sliplane.app",
       "tags": [
@@ -178,7 +178,7 @@
     },
     {
       "name": "DiffEngine",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/diffengine",
       "deploymentLink": "ivy-packagedemos-diffengine.sliplane.app",
       "tags": [
@@ -189,7 +189,7 @@
     },
     {
       "name": "DiffPlex – Text Comparison Tool",
-      "description": "An Ivy example demonstrating text comparison and diff visualization using the DiffPlex library.",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/diffplex",
       "deploymentLink": "ivy-packagedemos-diffplex.sliplane.app",
       "tags": [
@@ -199,7 +199,7 @@
     },
     {
       "name": "Dnsclient",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/dnsclient",
       "deploymentLink": "ivy-packagedemos-dnsclient.sliplane.app",
       "tags": [
@@ -213,7 +213,7 @@
     },
     {
       "name": "Enums.NET",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/enums-net",
       "deploymentLink": "ivy-packagedemos-enums-net.sliplane.app",
       "tags": [
@@ -223,7 +223,7 @@
     },
     {
       "name": "EPPlus",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/epplus",
       "deploymentLink": "ivy-packagedemos-epplus.sliplane.app",
       "tags": [
@@ -234,7 +234,7 @@
     },
     {
       "name": "ExcelDataReader",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/exceldatareader",
       "deploymentLink": "ivy-packagedemos-exceldatareader.sliplane.app",
       "tags": [
@@ -247,7 +247,7 @@
     },
     {
       "name": "FastMember",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/fastmember",
       "deploymentLink": "ivy-packagedemos-fastmember.sliplane.app",
       "tags": [
@@ -257,7 +257,7 @@
     },
     {
       "name": "FluentDateTime",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/fluentdatetime",
       "deploymentLink": "ivy-packagedemos-fluentdatetime.sliplane.app",
       "tags": [
@@ -268,7 +268,7 @@
     },
     {
       "name": "FuzzySharp",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/fuzzysharp",
       "deploymentLink": "ivy-packagedemos-fuzzysharp.sliplane.app",
       "tags": [
@@ -278,7 +278,7 @@
     },
     {
       "name": "GitHub",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/github",
       "deploymentLink": "ivy-packagedemos-github.sliplane.app",
       "tags": [
@@ -288,7 +288,7 @@
     },
     {
       "name": "Handlebars.Net",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/handlebars-net",
       "deploymentLink": "ivy-packagedemos-handlebars-net.sliplane.app",
       "tags": [
@@ -299,7 +299,7 @@
     },
     {
       "name": "Humanizer",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/humanizer",
       "deploymentLink": "ivy-packagedemos-humanizer.sliplane.app",
       "tags": [
@@ -309,7 +309,7 @@
     },
     {
       "name": "IbanNet",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/ibannet",
       "deploymentLink": "ivy-packagedemos-ibannet.sliplane.app",
       "tags": [
@@ -319,7 +319,7 @@
     },
     {
       "name": "JWT Demo Application",
-      "description": "This is an interactive Ivy demo application showcasing JWT (JSON Web Tokens) concepts and integration with the Ivy framework.",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/jwt",
       "deploymentLink": "ivy-packagedemos-jwt.sliplane.app",
       "tags": [
@@ -329,7 +329,7 @@
     },
     {
       "name": "Magick.NET-Q16-AnyCPU",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/magick-net-q16-anycpu",
       "deploymentLink": "ivy-packagedemos-magick-net-q16-anycpu.sliplane.app",
       "tags": [
@@ -340,7 +340,7 @@
     },
     {
       "name": "Mapster",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/mapster",
       "deploymentLink": "ivy-packagedemos-mapster.sliplane.app",
       "tags": [
@@ -350,7 +350,7 @@
     },
     {
       "name": "Microsoft.SemanticKernel",
-      "description": "Launch a ready-to-code workspace with: - .NET 9.0 SDK pre-installed",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/microsoft-semantickernel",
       "deploymentLink": "ivy-packagedemos-microsoft-semantickernel.sliplane.app",
       "tags": [
@@ -361,7 +361,7 @@
     },
     {
       "name": "Mimemapping",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/mimemapping",
       "deploymentLink": "ivy-packagedemos-mimemapping.sliplane.app",
       "tags": [
@@ -371,7 +371,7 @@
     },
     {
       "name": "MiniExcel",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/miniexcel",
       "deploymentLink": "ivy-packagedemos-miniexcel.sliplane.app",
       "tags": [
@@ -382,7 +382,7 @@
     },
     {
       "name": "NAudio",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/naudio",
       "deploymentLink": "ivy-packagedemos-naudio.sliplane.app",
       "tags": [
@@ -392,7 +392,7 @@
     },
     {
       "name": "Newtonsoft.Json",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/newtonsoft-json",
       "deploymentLink": "ivy-packagedemos-newtonsoft-json.sliplane.app",
       "tags": [
@@ -403,7 +403,7 @@
     },
     {
       "name": "NodaTime",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/nodatime",
       "deploymentLink": "ivy-packagedemos-nodatime.sliplane.app",
       "tags": [
@@ -414,7 +414,7 @@
     },
     {
       "name": "OllamaSharp",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/ollamasharp",
       "deploymentLink": "ivy-packagedemos-ollamasharp.sliplane.app",
       "tags": [
@@ -425,7 +425,7 @@
     },
     {
       "name": "OpenAIExample",
-      "description": "Web application created using Ivy.",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/openai",
       "deploymentLink": "ivy-packagedemos-openai.sliplane.app",
       "tags": [
@@ -436,7 +436,7 @@
     },
     {
       "name": "PuppeteerSharp",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/puppeteersharp",
       "deploymentLink": "ivy-packagedemos-puppeteersharp.sliplane.app",
       "tags": [
@@ -446,7 +446,7 @@
     },
     {
       "name": "QR Code Generator",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/qrcoder",
       "deploymentLink": "ivy-packagedemos-qrcoder.sliplane.app",
       "tags": [
@@ -457,7 +457,7 @@
     },
     {
       "name": "QuestPDF",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/questpdf",
       "deploymentLink": "ivy-packagedemos-questpdf.sliplane.app",
       "tags": [
@@ -468,7 +468,7 @@
     },
     {
       "name": "RestSharp",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/restsharp",
       "deploymentLink": "ivy-packagedemos-restsharp.sliplane.app",
       "tags": [
@@ -478,7 +478,7 @@
     },
     {
       "name": "Scriban",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/scriban",
       "deploymentLink": "ivy-packagedemos-scriban.sliplane.app",
       "tags": [
@@ -488,7 +488,7 @@
     },
     {
       "name": "Serialize.Linq",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/serialize-linq",
       "deploymentLink": "ivy-packagedemos-serialize-linq.sliplane.app",
       "tags": [
@@ -498,7 +498,7 @@
     },
     {
       "name": "SharpYaml",
-      "description": "Open the project instantly in GitHub Codespaces with:",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/sharpyaml",
       "deploymentLink": "ivy-packagedemos-sharpyaml.sliplane.app",
       "tags": [
@@ -508,7 +508,7 @@
     },
     {
       "name": "ShopifySharp",
-      "description": "Launch the repository in GitHub Codespaces with: - .NET 9.0 SDK pre-installed",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/shopifysharp",
       "deploymentLink": "ivy-packagedemos-shopifysharp.sliplane.app",
       "tags": [
@@ -518,7 +518,7 @@
     },
     {
       "name": "SimMetrics.Net",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run Ivy environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/simmetrics-net",
       "deploymentLink": "ivy-packagedemos-simmetrics-net.sliplane.app",
       "tags": [
@@ -529,7 +529,7 @@
     },
     {
       "name": "SmartFormat.NET",
-      "description": "- .NET 9.0 SDK pre-installed - SmartFormat.NET tooling ready to go",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/smartformat-net",
       "deploymentLink": "ivy-packagedemos-smartformat-net.sliplane.app",
       "tags": [
@@ -539,7 +539,7 @@
     },
     {
       "name": "Stripe.net",
-      "description": "Launch a ready-to-code workspace with: - .NET 9.0 SDK pre-installed",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/stripe-net",
       "deploymentLink": "ivy-packagedemos-stripe-net.sliplane.app",
       "tags": [
@@ -550,7 +550,7 @@
     },
     {
       "name": "Superpower",
-      "description": "Launch the repository in GitHub Codespaces pre-configured with:",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/superpower",
       "deploymentLink": "ivy-packagedemos-superpower.sliplane.app",
       "tags": [
@@ -560,7 +560,7 @@
     },
     {
       "name": "TimeZoneNames",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/timezonenames",
       "deploymentLink": "ivy-packagedemos-timezonenames.sliplane.app",
       "tags": [
@@ -571,7 +571,7 @@
     },
     {
       "name": "ULID",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/ulid",
       "deploymentLink": "ivy-packagedemos-ulid.sliplane.app",
       "tags": [
@@ -581,7 +581,7 @@
     },
     {
       "name": "UnitsNet",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/unitsnet",
       "deploymentLink": "ivy-packagedemos-unitsnet.sliplane.app",
       "tags": [
@@ -591,7 +591,7 @@
     },
     {
       "name": "XLParser",
-      "description": "- .NET 9.0 SDK pre-installed - XLParser tooling ready to go",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/xlparser",
       "deploymentLink": "ivy-packagedemos-xlparser.sliplane.app",
       "tags": [
@@ -601,7 +601,7 @@
     },
     {
       "name": "YamlDotNet",
-      "description": "- .NET 9.0 SDK pre-installed - YamlDotNet tooling ready to go",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/yamldotnet",
       "deploymentLink": "ivy-packagedemos-yamldotnet.sliplane.app",
       "tags": [
@@ -611,7 +611,7 @@
     },
     {
       "name": "ZString",
-      "description": "- .NET 9.0 SDK pre-installed - Ready-to-run development environment",
+      "description": "",
       "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/packages-demos/zstring",
       "deploymentLink": "ivy-packagedemos-zstring.sliplane.app",
       "tags": [
