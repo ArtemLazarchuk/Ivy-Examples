@@ -36,22 +36,20 @@ jobs:
         run: |
           echo "Searching for .csproj files..."
           IVY_VERSION="${{ steps.get-ivy-version.outputs.ivy_version }}"
+          
+          if [ -z "$IVY_VERSION" ]; then
+            echo "Error: Could not determine Ivy version"
+            exit 1
+          fi
+          
+          echo "Updating all Ivy references to version $IVY_VERSION..."
+          # Update all .csproj files directly using sed (much faster than dotnet add/remove)
           for csproj in $(find . -name "*.csproj"); do
-            echo "Processing: $csproj"
             if grep -q 'PackageReference Include="Ivy"' "$csproj"; then
-              echo "Ivy found in $csproj, updating to latest version..."
-              # Remove existing Ivy reference
-              dotnet remove "$csproj" package Ivy || true
-              # Add latest Ivy version
-              if [ -n "$IVY_VERSION" ]; then
-                echo "Adding Ivy version $IVY_VERSION"
-                dotnet add "$csproj" package Ivy --version "$IVY_VERSION" || true
-              else
-                echo "Adding latest Ivy version (no version specified)"
-                dotnet add "$csproj" package Ivy || true
-              fi
-            else
-              echo "Ivy NOT found in $csproj, skipping"
+              echo "Updating Ivy in: $csproj"
+              # Update version directly in .csproj file using sed
+              # Matches: <PackageReference Include="Ivy" Version="..." />
+              sed -i 's|<PackageReference Include="Ivy" Version="[^"]*"|<PackageReference Include="Ivy" Version="'$IVY_VERSION'"|g' "$csproj" || true
             fi
           done
 
