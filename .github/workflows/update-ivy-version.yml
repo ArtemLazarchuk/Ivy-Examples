@@ -32,11 +32,6 @@ jobs:
             echo "ivy_version=$IVY_VERSION" >> $GITHUB_OUTPUT
           fi
 
-      - name: Clear NuGet cache
-        run: |
-          echo "Clearing NuGet cache to force fresh package resolution..."
-          dotnet nuget locals all --clear || true
-
       - name: Find all csproj and update Ivy to latest version
         run: |
           echo "Searching for .csproj files..."
