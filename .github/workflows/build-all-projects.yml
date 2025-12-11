@@ -15,66 +15,60 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
 
 jobs:
-  check-ivy-version:
-    name: Check Ivy Version
+  update-ivy-version:
+    name: Update Ivy Version
     runs-on: ubuntu-latest
-    outputs:
-      should-build: ${{ steps.version-check.outputs.should-build }}
-      current-version: ${{ steps.version-check.outputs.current-version }}
-      latest-version: ${{ steps.version-check.outputs.latest-version }}
-      version-changed: ${{ steps.version-check.outputs.version-changed }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          repository: ${{ github.repository }}
-          ref: ${{ github.ref }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Check Ivy version
-        id: version-check
+      - name: Get latest Ivy version from NuGet
+        id: ivy
         run: |
-          echo "🔍 Checking latest Ivy version on NuGet..."
-          latest_version=$(curl -s "https://api.nuget.org/v3-flatcontainer/ivy/index.json" | jq -r '.versions | last')
-          echo "Latest Ivy version: $latest_version"
-          current_version="wildcard"
-          version_changed="false"
-          should_build="false"
+          echo "Fetching latest Ivy version from NuGet..."
+          IVY_VERSION=$(curl -s "https://api.nuget.org/v3-flatcontainer/ivy/index.json" \
+            | grep -oE '"[0-9]+\.[0-9]+\.[0-9]+"' \
+            | tail -1 | tr -d '"' || echo "")
 
-          if [ "${{ github.event_name }}" == "schedule" ]; then
-            last_known_version_file=".github/last-ivy-version.txt"
-            last_known_version=""
-            if [ -f "$last_known_version_file" ]; then
-              last_known_version=$(cat "$last_known_version_file")
-              echo "Last known Ivy version: $last_known_version"
-            else
-              echo "No previous version record found"
-            fi
-
-            if [ -z "$last_known_version" ] || [ "$last_known_version" != "$latest_version" ]; then
-              echo "🆕 New Ivy version detected!"
-              should_build="true"
-              version_changed="true"
-              echo "$latest_version" > "$last_known_version_file"
-            else
-              echo "✅ No new Ivy version since last check"
-            fi
+          if [ -z "$IVY_VERSION" ]; then
+            echo "Error: Could not fetch Ivy version"
+            exit 1
           fi
 
-          if [ "${{ github.event_name }}" == "push" ] || [ "${{ github.event_name }}" == "pull_request" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            should_build="true"
-            echo "🔄 Code change detected - will build"
-            echo "$latest_version" > ".github/last-ivy-version.txt"
-          fi
+          echo "Latest Ivy version: $IVY_VERSION"
+          echo "ivy_version=$IVY_VERSION" >> $GITHUB_OUTPUT
 
-          echo "should-build=$should_build" >> $GITHUB_OUTPUT
-          echo "current-version=$current_version" >> $GITHUB_OUTPUT
-          echo "latest-version=$latest_version" >> $GITHUB_OUTPUT
-          echo "version-changed=$version_changed" >> $GITHUB_OUTPUT
+      - name: Update Ivy version in csproj files
+        run: |
+          IVY_VERSION="${{ steps.ivy.outputs.ivy_version }}"
+          echo "Updating Ivy to version: $IVY_VERSION"
+
+          for csproj in $(find . -name "*.csproj"); do
+            if grep -q 'PackageReference Include="Ivy"' "$csproj"; then
+              echo "Updating: $csproj"
+              sed -i \
+                "s|<PackageReference Include=\"Ivy\" Version=\"[^\"]*\"|<PackageReference Include=\"Ivy\" Version=\"$IVY_VERSION\"|g" \
+                "$csproj"
+            fi
+          done
+
+      - name: Commit changes if needed
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit."
+          else
+            git config user.name "github-actions"
+            git config user.email "github-actions@github.com"
+            git add .
+            git commit -m "Update Ivy to version ${{ steps.ivy.outputs.ivy_version }}"
+            git push
+          fi
 
   discover-projects:
     name: Discover Projects
