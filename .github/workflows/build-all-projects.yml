@@ -66,7 +66,7 @@ jobs:
           current="${{ steps.get-current.outputs.current-version }}"
           
           # Always build for PRs and manual triggers
-          if [ "${{ github.event_name }}" == "pull_request" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          if [ "${{ github.event_name }}" == "push" ] || [ "${{ github.event_name }}" == "pull_request" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "should-build=true" >> $GITHUB_OUTPUT
             echo "latest-version=$latest" >> $GITHUB_OUTPUT
             echo "current-version=$current" >> $GITHUB_OUTPUT
