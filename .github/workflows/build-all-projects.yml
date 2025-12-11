@@ -15,21 +15,19 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
 
 jobs:
-  update-ivy-version:
-    name: Update Ivy Version
+  check-ivy-version:
+    name: Check Ivy Version
     runs-on: ubuntu-latest
-
+    outputs:
+      should-build: ${{ steps.check.outputs.should-build }}
+      latest-version: ${{ steps.check.outputs.latest-version }}
+      current-version: ${{ steps.check.outputs.current-version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
       - name: Get latest Ivy version from NuGet
-        id: ivy
+        id: get-latest
         run: |
           echo "Fetching latest Ivy version from NuGet..."
           IVY_VERSION=$(curl -s "https://api.nuget.org/v3-flatcontainer/ivy/index.json" \
@@ -42,32 +40,44 @@ jobs:
           fi
 
           echo "Latest Ivy version: $IVY_VERSION"
-          echo "ivy_version=$IVY_VERSION" >> $GITHUB_OUTPUT
+          echo "latest-version=$IVY_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Update Ivy version in csproj files
+      - name: Get current Ivy version from csproj
+        id: get-current
         run: |
-          IVY_VERSION="${{ steps.ivy.outputs.ivy_version }}"
-          echo "Updating Ivy to version: $IVY_VERSION"
-
-          for csproj in $(find . -name "*.csproj"); do
-            if grep -q 'PackageReference Include="Ivy"' "$csproj"; then
-              echo "Updating: $csproj"
-              sed -i \
-                "s|<PackageReference Include=\"Ivy\" Version=\"[^\"]*\"|<PackageReference Include=\"Ivy\" Version=\"$IVY_VERSION\"|g" \
-                "$csproj"
-            fi
-          done
-
-      - name: Commit changes if needed
-        run: |
-          if git diff --quiet; then
-            echo "No changes to commit."
+          current_version=$(find . -name "*.csproj" -not -path "*/bin/*" -not -path "*/obj/*" \
+            | head -1 \
+            | xargs grep -oE 'PackageReference Include="Ivy" Version="[^"]*"' \
+            | grep -oE 'Version="[^"]*"' \
+            | head -1 \
+            | sed 's/Version="\(.*\)"/\1/' || echo "")
+          
+          if [ -z "$current_version" ]; then
+            echo "current-version=unknown" >> $GITHUB_OUTPUT
           else
-            git config user.name "github-actions"
-            git config user.email "github-actions@github.com"
-            git add .
-            git commit -m "Update Ivy to version ${{ steps.ivy.outputs.ivy_version }}"
-            git push
+            echo "Current Ivy version: $current_version"
+            echo "current-version=$current_version" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Determine if build is needed
+        id: check
+        run: |
+          latest="${{ steps.get-latest.outputs.latest-version }}"
+          current="${{ steps.get-current.outputs.current-version }}"
+          
+          # Always build for PRs and manual triggers
+          if [ "${{ github.event_name }}" == "pull_request" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "should-build=true" >> $GITHUB_OUTPUT
+            echo "latest-version=$latest" >> $GITHUB_OUTPUT
+            echo "current-version=$current" >> $GITHUB_OUTPUT
+          elif [ "$latest" != "$current" ]; then
+            echo "should-build=true" >> $GITHUB_OUTPUT
+            echo "latest-version=$latest" >> $GITHUB_OUTPUT
+            echo "current-version=$current" >> $GITHUB_OUTPUT
+          else
+            echo "should-build=false" >> $GITHUB_OUTPUT
+            echo "latest-version=$latest" >> $GITHUB_OUTPUT
+            echo "current-version=$current" >> $GITHUB_OUTPUT
           fi
 
   discover-projects:
