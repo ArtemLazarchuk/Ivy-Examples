@@ -266,7 +266,7 @@ jobs:
             git add .
             git commit -m "Update Ivy to version ${{ needs.check-ivy-version.outputs.latest-version }}"
             git push origin HEAD:catalog-updates
-
+          fi
 
   build-summary:
     name: Build Summary
