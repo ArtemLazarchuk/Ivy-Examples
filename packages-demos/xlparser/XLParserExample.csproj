@@ -17,7 +17,7 @@
   
   
   <ItemGroup>
-    <PackageReference Include="Ivy" Version="1.*" />
+    <PackageReference Include="Ivy" Version="1.1.4" />
     <PackageReference Include="XLParser" Version="1.7.5" />
   </ItemGroup>
   

@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ivy" Version="1.*" />
+    <PackageReference Include="Ivy" Version="1.1.4" />
     <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="14.9.0" />
   </ItemGroup>
 
