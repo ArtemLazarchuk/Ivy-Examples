@@ -46,10 +46,8 @@ jobs:
         id: get-current
         run: |
           current_version=$(find . -name "*.csproj" -not -path "*/bin/*" -not -path "*/obj/*" \
-            | head -1 \
             | xargs grep -oE 'PackageReference Include="Ivy" Version="[^"]*"' \
             | grep -oE 'Version="[^"]*"' \
-            | head -1 \
             | sed 's/Version="\(.*\)"/\1/' || echo "")
           
           if [ -z "$current_version" ]; then
