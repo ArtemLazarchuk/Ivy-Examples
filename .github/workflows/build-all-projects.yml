@@ -298,47 +298,46 @@ jobs:
             **/*.csproj
           retention-days: 1
 
-  check-build-results:
-  name: Check Build Results
-  runs-on: ubuntu-latest
-  needs: [check-ivy-version, discover-projects, build-projects]
-  if: always() && needs.check-ivy-version.outputs.should-build == 'true'
+    check-build-results:
+    name: Check Build Results
+    runs-on: ubuntu-latest
+    needs: [check-ivy-version, discover-projects, build-projects]
+    if: always() && needs.check-ivy-version.outputs.should-build == 'true'
 
-  outputs:
-    all-succeeded: ${{ steps.result.outputs.all-succeeded }}
-    success-count: ${{ steps.result.outputs.success-count }}
-    total-count: ${{ steps.result.outputs.total-count }}
+    outputs:
+      all-succeeded: ${{ steps.result.outputs.all-succeeded }}
+      success-count: ${{ steps.result.outputs.success-count }}
+      total-count: ${{ steps.result.outputs.total-count }}
 
-  steps:
-    - name: Aggregate results
-      id: result
-      run: |
-        total="${{ needs.discover-projects.outputs.project-count }}"
-        result="${{ needs.build-projects.result }}"
+    steps:
+      - name: Aggregate results
+        id: result
+        run: |
+          total="${{ needs.discover-projects.outputs.project-count }}"
+          result="${{ needs.build-projects.result }}"
 
-        if [ "$result" = "success" ]; then
-          success="$total"
-          all="true"
-        else
-          success="0"
-          all="false"
-        fi
+          if [ "$result" = "success" ]; then
+            success="$total"
+            all="true"
+          else
+            success="0"
+            all="false"
+          fi
 
-        echo "total-count=$total" >> $GITHUB_OUTPUT
-        echo "success-count=$success" >> $GITHUB_OUTPUT
-        echo "all-succeeded=$all" >> $GITHUB_OUTPUT
+          echo "total-count=$total" >> $GITHUB_OUTPUT
+          echo "success-count=$success" >> $GITHUB_OUTPUT
+          echo "all-succeeded=$all" >> $GITHUB_OUTPUT
 
-        echo "## Build Results" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "- Total projects: $total" >> $GITHUB_STEP_SUMMARY
-        echo "- Successful builds: $success" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Total projects: $total" >> $GITHUB_STEP_SUMMARY
+          echo "- Successful builds: $success" >> $GITHUB_STEP_SUMMARY
 
-        if [ "$all" = "true" ]; then
-          echo "✅ All projects built successfully" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "❌ One or more projects failed to build" >> $GITHUB_STEP_SUMMARY
-          exit 1
-        fi
+          if [ "$all" != "true" ]; then
+            echo "❌ One or more projects failed to build" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ All projects built successfully" >> $GITHUB_STEP_SUMMARY
+          fi
 
   commit-changes:
     name: Commit Version Updates
