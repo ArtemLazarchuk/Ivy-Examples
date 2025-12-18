@@ -310,16 +310,30 @@ jobs:
       total-count: ${{ steps.calc.outputs.total-count }}
 
     steps:
+      - name: Download build results
+        uses: actions/download-artifact@v4
+        with:
+          name: build-results
+          path: build-results
+
       - name: Calculate build results
         id: calc
         run: |
+          set -e
+
           total=${{ needs.discover-projects.outputs.project-count }}
 
-          # build-projects.outputs.success is a JSON array like [1,1,0,1]
-          successes='${{ toJson(needs.build-projects.outputs.success) }}'
+          if [ ! -d "build-results" ]; then
+            echo "❌ build-results artifact not found"
+            exit 1
+          fi
 
-          success_count=$(echo "$successes" | jq '[.[] | select(. == "1")] | length')
-          failed_count=$((total - success_count))
+          success_count=$(grep -R "^success$" build-results | wc -l | tr -d ' ')
+          failed_count=$(grep -R "^failure$" build-results | wc -l | tr -d ' ')
+
+          # Safety guards
+          if ! [[ "$success_count" =~ ^[0-9]+$ ]]; then success_count=0; fi
+          if ! [[ "$failed_count" =~ ^[0-9]+$ ]]; then failed_count=0; fi
 
           if [ "$success_count" -eq "$total" ]; then
             all="true"
@@ -331,13 +345,21 @@ jobs:
           echo "success-count=$success_count" >> $GITHUB_OUTPUT
           echo "all-succeeded=$all" >> $GITHUB_OUTPUT
 
-          echo "## Build Results" >> $GITHUB_STEP_SUMMARY
-          echo "- Total: $total" >> $GITHUB_STEP_SUMMARY
-          echo "- Success: $success_count" >> $GITHUB_STEP_SUMMARY
-          echo "- Failed: $failed_count" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Build Results"
+            echo ""
+            echo "- **Total projects:** $total"
+            echo "- **Successful builds:** $success_count"
+            echo "- **Failed builds:** $failed_count"
+          } >> $GITHUB_STEP_SUMMARY
 
           if [ "$all" != "true" ]; then
+            echo ""
+            echo "❌ One or more projects failed to build" >> $GITHUB_STEP_SUMMARY
             exit 1
+          else
+            echo ""
+            echo "✅ All projects built successfully" >> $GITHUB_STEP_SUMMARY
           fi
 
   commit-changes:
