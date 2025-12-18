@@ -12,7 +12,7 @@ public class BarcodeApp : ViewBase
 
   private static float GetXDimension(DemoSize size)
   {
-    return size switch
+    return size
     {
       DemoSize.Small => 5f,
       DemoSize.Medium => 10f,
