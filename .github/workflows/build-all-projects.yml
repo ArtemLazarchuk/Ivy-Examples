@@ -372,7 +372,7 @@ jobs:
     name: Commit Version Updates
     runs-on: ubuntu-latest
     needs: [check-ivy-version, update-ivy-version, check-build-results]
-    if: needs.check-build-results.outputs.all-succeeded == 'true' && needs.update-ivy-version.outputs.has-changes == 'true'
+    if: needs.check-build-results.outputs.all-succeeded == 'true' && needs.update-ivy-version.outputs.has-changes == 'true' && github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -395,7 +395,7 @@ jobs:
             exit 0
           fi
           git commit -m "Update Ivy to version ${{ needs.check-ivy-version.outputs.latest-version }}"
-          git push origin HEAD:${{ github.ref_name }}
+          git push origin HEAD:${{ github.ref }}
 
 
   build-summary:
