@@ -312,31 +312,73 @@ jobs:
     steps:
       - name: Aggregate results
         id: result
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           total="${{ needs.discover-projects.outputs.project-count }}"
           result="${{ needs.build-projects.result }}"
 
           if [ "$result" = "success" ]; then
+            # All builds succeeded
             success="$total"
             all="true"
           else
-            success="0"
-            all="false"
+            # Some builds failed, need to count actual successes
+            RUN_ID="${{ github.run_id }}"
+            JOB_NAME="Build"
+            
+            # Get all jobs for this workflow run
+            response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID/jobs")
+            
+            # Count successful build jobs
+            success=$(echo "$response" | jq -r ".jobs[] | select(.name | startswith(\"$JOB_NAME\")) | select(.conclusion == \"success\") | .name" | wc -l | tr -d ' ')
+            
+            # If jq failed or count is empty, try alternative
+            if [ -z "$success" ] || ! [[ "$success" =~ ^[0-9]+$ ]]; then
+              # Fallback: count from job names that contain the project name pattern
+              # This is a workaround if API doesn't work
+              success=$(echo "$response" | jq -r ".jobs[] | select(.name | startswith(\"$JOB_NAME\")) | .conclusion" | grep -c "success" || echo "0")
+            fi
+            
+            # Ensure success is a valid number
+            if ! [[ "$success" =~ ^[0-9]+$ ]]; then
+              success="0"
+            fi
+            
+            # Check if all succeeded
+            if [ "$success" -eq "$total" ]; then
+              all="true"
+            else
+              all="false"
+            fi
           fi
 
           echo "total-count=$total" >> $GITHUB_OUTPUT
           echo "success-count=$success" >> $GITHUB_OUTPUT
           echo "all-succeeded=$all" >> $GITHUB_OUTPUT
 
-          echo "## Build Results" >> $GITHUB_STEP_SUMMARY
-          echo "- Total projects: $total" >> $GITHUB_STEP_SUMMARY
-          echo "- Successful builds: $success" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Results: $success/$total" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total projects:** $total" >> $GITHUB_STEP_SUMMARY
+          echo "- **Successful builds:** $success" >> $GITHUB_STEP_SUMMARY
+          echo "- **Failed builds:** $((total - success))" >> $GITHUB_STEP_SUMMARY
 
           if [ "$all" != "true" ]; then
-            echo "❌ One or more projects failed to build" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **One or more projects failed to build**" >> $GITHUB_STEP_SUMMARY
+            echo "Commit will not be created." >> $GITHUB_STEP_SUMMARY
             exit 1
           else
-            echo "✅ All projects built successfully" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **All projects built successfully**" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Final check
+          if [ "${{ needs.build-projects.result }}" != "success" ]; then
+            echo "❌ Build workflow failed"
+            exit 1
+          else
+            echo "✅ Build workflow succeeded"
           fi
 
   commit-changes:
