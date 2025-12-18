@@ -177,6 +177,7 @@ jobs:
         run: dotnet restore "${{ matrix.project.path }}"
 
       - name: Build project
+        id: build
         run: |
           echo "🔨 Building: ${{ matrix.project.name }}"
           dotnet build "${{ matrix.project.path }}" \
@@ -184,11 +185,32 @@ jobs:
             --no-restore \
             --verbosity normal
 
-      - name: Upload build artifacts (on failure)
+      - name: Save build result
+        if: always()
+        run: |
+          mkdir -p build-results
+          # Create unique filename from path (replace / and . with -)
+          SAFE_NAME=$(echo "${{ matrix.project.path }}" | sed 's/[\/\.]/-/g')
+          if [ "${{ steps.build.outcome }}" == "success" ]; then
+            echo "success" > "build-results/${SAFE_NAME}.txt"
+          else
+            echo "failure" > "build-results/${SAFE_NAME}.txt"
+          fi
+          echo "SAFE_NAME=${SAFE_NAME}" >> $GITHUB_ENV
+
+      - name: Upload build result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-result-${{ env.SAFE_NAME }}
+          path: build-results/${{ env.SAFE_NAME }}.txt
+          retention-days: 1
+
+      - name: Upload build logs (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs-${{ matrix.project.name }}
+          name: build-logs-${{ env.SAFE_NAME }}
           path: |
             **/bin/**/*.log
             **/obj/**/*.log
@@ -310,30 +332,20 @@ jobs:
       total-count: ${{ steps.calc.outputs.total-count }}
 
     steps:
-      - name: Download build results
+      - name: Download all build results
         uses: actions/download-artifact@v4
         with:
-          name: build-results
+          pattern: build-result-*
           path: build-results
+          merge-multiple: true
 
       - name: Calculate build results
         id: calc
         run: |
-          set -e
-
           total=${{ needs.discover-projects.outputs.project-count }}
 
-          if [ ! -d "build-results" ]; then
-            echo "❌ build-results artifact not found"
-            exit 1
-          fi
-
-          success_count=$(grep -R "^success$" build-results | wc -l | tr -d ' ')
-          failed_count=$(grep -R "^failure$" build-results | wc -l | tr -d ' ')
-
-          # Safety guards
-          if ! [[ "$success_count" =~ ^[0-9]+$ ]]; then success_count=0; fi
-          if ! [[ "$failed_count" =~ ^[0-9]+$ ]]; then failed_count=0; fi
+          success_count=$(grep -l "success" build-results/*.txt 2>/dev/null | wc -l | tr -d ' ')
+          failed_count=$(grep -l "failure" build-results/*.txt 2>/dev/null | wc -l | tr -d ' ')
 
           if [ "$success_count" -eq "$total" ]; then
             all="true"
@@ -345,21 +357,15 @@ jobs:
           echo "success-count=$success_count" >> $GITHUB_OUTPUT
           echo "all-succeeded=$all" >> $GITHUB_OUTPUT
 
-          {
-            echo "## Build Results"
-            echo ""
-            echo "- **Total projects:** $total"
-            echo "- **Successful builds:** $success_count"
-            echo "- **Failed builds:** $failed_count"
-          } >> $GITHUB_STEP_SUMMARY
+          echo "## Build Results: $success_count/$total" >> $GITHUB_STEP_SUMMARY
+          echo "- **Successful:** $success_count" >> $GITHUB_STEP_SUMMARY
+          echo "- **Failed:** $failed_count" >> $GITHUB_STEP_SUMMARY
 
           if [ "$all" != "true" ]; then
-            echo ""
-            echo "❌ One or more projects failed to build" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Build failed" >> $GITHUB_STEP_SUMMARY
             exit 1
           else
-            echo ""
-            echo "✅ All projects built successfully" >> $GITHUB_STEP_SUMMARY
+            echo "✅ All builds passed" >> $GITHUB_STEP_SUMMARY
           fi
 
   commit-changes:
