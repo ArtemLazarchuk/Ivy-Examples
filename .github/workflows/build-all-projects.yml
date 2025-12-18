@@ -305,80 +305,39 @@ jobs:
     if: always() && needs.check-ivy-version.outputs.should-build == 'true'
 
     outputs:
-      all-succeeded: ${{ steps.result.outputs.all-succeeded }}
-      success-count: ${{ steps.result.outputs.success-count }}
-      total-count: ${{ steps.result.outputs.total-count }}
+      all-succeeded: ${{ steps.calc.outputs.all-succeeded }}
+      success-count: ${{ steps.calc.outputs.success-count }}
+      total-count: ${{ steps.calc.outputs.total-count }}
 
     steps:
-      - name: Aggregate results
-        id: result
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Calculate build results
+        id: calc
         run: |
-          total="${{ needs.discover-projects.outputs.project-count }}"
-          result="${{ needs.build-projects.result }}"
+          total=${{ needs.discover-projects.outputs.project-count }}
 
-          if [ "$result" = "success" ]; then
-            # All builds succeeded
-            success="$total"
+          # build-projects.outputs.success is a JSON array like [1,1,0,1]
+          successes='${{ toJson(needs.build-projects.outputs.success) }}'
+
+          success_count=$(echo "$successes" | jq '[.[] | select(. == "1")] | length')
+          failed_count=$((total - success_count))
+
+          if [ "$success_count" -eq "$total" ]; then
             all="true"
           else
-            # Some builds failed, need to count actual successes
-            RUN_ID="${{ github.run_id }}"
-            JOB_NAME="Build"
-            
-            # Get all jobs for this workflow run
-            response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-              "https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID/jobs")
-            
-            # Count successful build jobs
-            success=$(echo "$response" | jq -r ".jobs[] | select(.name | startswith(\"$JOB_NAME\")) | select(.conclusion == \"success\") | .name" | wc -l | tr -d ' ')
-            
-            # If jq failed or count is empty, try alternative
-            if [ -z "$success" ] || ! [[ "$success" =~ ^[0-9]+$ ]]; then
-              # Fallback: count from job names that contain the project name pattern
-              # This is a workaround if API doesn't work
-              success=$(echo "$response" | jq -r ".jobs[] | select(.name | startswith(\"$JOB_NAME\")) | .conclusion" | grep -c "success" || echo "0")
-            fi
-            
-            # Ensure success is a valid number
-            if ! [[ "$success" =~ ^[0-9]+$ ]]; then
-              success="0"
-            fi
-            
-            # Check if all succeeded
-            if [ "$success" -eq "$total" ]; then
-              all="true"
-            else
-              all="false"
-            fi
+            all="false"
           fi
 
           echo "total-count=$total" >> $GITHUB_OUTPUT
-          echo "success-count=$success" >> $GITHUB_OUTPUT
+          echo "success-count=$success_count" >> $GITHUB_OUTPUT
           echo "all-succeeded=$all" >> $GITHUB_OUTPUT
 
-          echo "## Build Results: $success/$total" >> $GITHUB_STEP_SUMMARY
-          echo "- **Total projects:** $total" >> $GITHUB_STEP_SUMMARY
-          echo "- **Successful builds:** $success" >> $GITHUB_STEP_SUMMARY
-          echo "- **Failed builds:** $((total - success))" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Total: $total" >> $GITHUB_STEP_SUMMARY
+          echo "- Success: $success_count" >> $GITHUB_STEP_SUMMARY
+          echo "- Failed: $failed_count" >> $GITHUB_STEP_SUMMARY
 
           if [ "$all" != "true" ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "❌ **One or more projects failed to build**" >> $GITHUB_STEP_SUMMARY
-            echo "Commit will not be created." >> $GITHUB_STEP_SUMMARY
             exit 1
-          else
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "✅ **All projects built successfully**" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          # Final check
-          if [ "${{ needs.build-projects.result }}" != "success" ]; then
-            echo "❌ Build workflow failed"
-            exit 1
-          else
-            echo "✅ Build workflow succeeded"
           fi
 
   commit-changes:
