@@ -1,0 +1,67 @@
+name: Update Remote Postgres
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  update_db:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install DB driver
+        run: pip install psycopg2-binary requests
+
+      - name: Run Update
+        env:
+          # DB_URL: ${{ secrets.DB_URL }}
+          DB_URL: "postgresql://postgres:postgres@localhost:5432/postgres"
+          PACKAGE_ID: "Ivy"
+        run: |
+          python - <<EOF
+          import os
+          import requests
+          import psycopg2
+
+          # 1. Get data from NuGet API
+          pkg = os.getenv('PACKAGE_ID')
+          api_url = f"https://azuresearch-usnc.nuget.org/query?q=packageid:{pkg}"
+          res = requests.get(api_url).json()
+          downloads = res['data'][0]['totalDownloads']
+
+          # 2. Connect to database
+          try:
+              conn = psycopg2.connect(os.getenv('DB_URL'))
+              cur = conn.cursor()
+              
+              # Create table (if first run)
+              cur.execute("""
+                  CREATE TABLE IF NOT EXISTS nuget_history (
+                      id SERIAL PRIMARY KEY,
+                      package_name TEXT,
+                      downloads BIGINT,
+                      date DATE DEFAULT CURRENT_DATE,
+                      UNIQUE(package_name, date)
+                  );
+              """)
+              
+              # Insert data (update if record exists for today)
+              query = """
+              INSERT INTO nuget_history (package_name, downloads)
+              VALUES (%s, %s)
+              ON CONFLICT (package_name, date) 
+              DO UPDATE SET downloads = EXCLUDED.downloads;
+              """
+              cur.execute(query, (pkg, downloads))
+              
+              conn.commit()
+              print(f"Success! {pkg}: {downloads} downloads added to database.")
+          except Exception as e:
+              print(f"Connection error: {e}")
+              exit(1)
+          finally:
+              if 'conn' in locals():
+                  cur.close()
+                  conn.close()
+          EOF
+
