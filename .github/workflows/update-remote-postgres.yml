@@ -15,7 +15,7 @@ jobs:
       - name: Run Update
         env:
           # DB_URL: ${{ secrets.DB_URL }}
-          DB_URL: "postgresql://postgres:U8173iz9106eACW4@db.mxijqaohqkhlaxkkipkq.supabase.co:5432/postgres"
+          DB_URL: "postgresql://postgres.mxijqaohqkhlaxkkipkq:U8173iz9106eACW4@aws-1-eu-west-1.pooler.supabase.com:5432/postgres"
           PACKAGE_ID: "Ivy"
         run: |
           python - <<EOF
