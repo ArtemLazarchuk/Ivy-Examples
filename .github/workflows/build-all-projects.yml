@@ -13,6 +13,7 @@ env:
   DOTNET_VERSION: "10.0.x"
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
+  IVY_FIXED_VERSION: "1.2.17-pre-20260312131413"
 
 jobs:
   check-ivy-version:
@@ -281,37 +282,15 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Update Ivy version in csproj files
+      - name: Set Ivy version in all projects
         run: |
-          IVY_VERSION="${{ needs.check-ivy-version.outputs.latest-version }}"
-          echo "Comparing against latest stable Ivy version: $IVY_VERSION"
+          echo "Setting Ivy version to fixed value: $IVY_FIXED_VERSION"
 
-          for csproj in $(find . -name "*.csproj"); do
-            if grep -q 'PackageReference Include="Ivy"' "$csproj"; then
-              proj_version=$(grep -oE 'PackageReference Include="Ivy" Version="[^"]*"' "$csproj" | grep -oE 'Version="[^"]*"' | sed 's/Version="\(.*\)"/\1/' | head -n 1)
-              
-              if [ -z "$proj_version" ] || [ "$proj_version" == "$IVY_VERSION" ]; then
-                continue
-              fi
-              
-              proj_base=$(echo "$proj_version" | cut -d'-' -f1)
-              
-              # Do not downgrade pre-releases of the current stable version
-              if [[ "$proj_version" == *-* ]] && [ "$proj_base" == "$IVY_VERSION" ]; then
-                echo "Skipping $csproj (has pre-release $proj_version matching latest stable $IVY_VERSION)"
-                continue
-              fi
-              
-              # Do not downgrade to an older stable version if project is on a newer version
-              higher_version=$(printf "%s\n%s" "$proj_base" "$IVY_VERSION" | sort -V | tail -n1)
-              if [ "$higher_version" == "$proj_base" ] && [ "$proj_base" != "$IVY_VERSION" ]; then
-                echo "Skipping $csproj (has newer version $proj_version than latest stable $IVY_VERSION)"
-                continue
-              fi
-              
-              echo "Updating: $csproj from $proj_version to $IVY_VERSION"
-              sed -i "s|<PackageReference Include=\"Ivy\" Version=\"[^\"]*\"|<PackageReference Include=\"Ivy\" Version=\"$IVY_VERSION\"|g" "$csproj"
-            fi
+          for csproj in $(find . -name "*.csproj" -not -path "*/bin/*" -not -path "*/obj/*"); do
+            echo "Processing project: $csproj"
+
+            # Ensure Ivy package is set to the fixed version using dotnet CLI
+            dotnet add "$csproj" package Ivy --version "$IVY_FIXED_VERSION"
           done
 
       - name: Save changes for commit
@@ -408,7 +387,7 @@ jobs:
             echo "No changes to commit"
             exit 0
           fi
-          git commit -m "Update Ivy to version ${{ needs.check-ivy-version.outputs.latest-version }}"
+          git commit -m "Update Ivy to version ${{ env.IVY_FIXED_VERSION }}"
           git push origin HEAD:${{ github.ref }}
 
   build-summary:
