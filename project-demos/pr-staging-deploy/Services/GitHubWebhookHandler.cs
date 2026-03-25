@@ -250,8 +250,7 @@ public class GitHubWebhookHandler
                         docsUrl: null,
                         samplesUrl: null,
                         status: "Deleted",
-                        logLines: new[] { TruncLine(deleteResult.Message, 240) },
-                        forceNewComment: true);
+                        logLines: null);
                 break;
 
             default:

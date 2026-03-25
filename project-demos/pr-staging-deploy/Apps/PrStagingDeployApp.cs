@@ -222,7 +222,7 @@ public class PrStagingDeployApp : ViewBase
                                 foreach (var pr in prsThatHadServices)
                                 {
                                     _ = prComments.TryPostOrUpdateStagingCommentAsync(
-                                        owner, repo, pr.Number, null, null, "Deleted", null, forceNewComment: true);
+                                        owner, repo, pr.Number, null, null, "Deleted", null);
                                 }
                             }
 
@@ -386,8 +386,7 @@ public class PrStagingDeployApp : ViewBase
                         owner, repo, prNumber,
                         docsUrl: null, samplesUrl: null,
                         status: "Deleting...",
-                        logLines: null,
-                        forceNewComment: true);
+                        logLines: null);
                 }
 
                 var result = await deploySvc.DeleteBranchAsync(t, branchName);
