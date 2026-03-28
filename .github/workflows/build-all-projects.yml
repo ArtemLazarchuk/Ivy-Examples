@@ -311,6 +311,13 @@ jobs:
               return
             fi
 
+            # Always replace wildcard/floating versions (e.g. "1.*", "*", "1.2.*")
+            if [[ "$proj_version" == *\** ]]; then
+              echo "Updating: $file ($package) from wildcard $proj_version to $IVY_VERSION"
+              sed -i "$replace" "$file"
+              return
+            fi
+
             proj_base=$(echo "$proj_version" | cut -d'-' -f1)
 
             # Do not downgrade pre-releases of the current stable version
