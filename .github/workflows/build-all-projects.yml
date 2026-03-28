@@ -397,6 +397,47 @@ jobs:
             done
           done < <(find . -name "*.props" -not -path "*/bin/*" -not -path "*/obj/*" -print0)
 
+          # --- 4. Update file-based programs (.NET 10) ---
+          # These use "#:package PackageName@version" directives directly in .cs files
+          while IFS= read -r -d '' csfile; do
+            for package in "${packages[@]}"; do
+              if ! grep -q "^#:package ${package}@" "$csfile"; then
+                continue
+              fi
+
+              proj_version=$(grep -oE "^#:package ${package}@[^ ]+" "$csfile" | sed "s|#:package ${package}@||" | head -n 1)
+
+              if [ -z "$proj_version" ] || [ "$proj_version" == "$IVY_VERSION" ]; then
+                continue
+              fi
+
+              # Always replace wildcard/floating versions (e.g. "1.*", "*", "1.2.*")
+              if [[ "$proj_version" == *\** ]]; then
+                echo "Updating: $csfile ($package) from wildcard $proj_version to $IVY_VERSION"
+                sed -i "s|^#:package ${package}@[^ ]*|#:package ${package}@${IVY_VERSION}|g" "$csfile"
+                continue
+              fi
+
+              proj_base=$(echo "$proj_version" | cut -d'-' -f1)
+
+              # Do not downgrade pre-releases of the current stable version
+              if [[ "$proj_version" == *-* ]] && [ "$proj_base" == "$IVY_VERSION" ]; then
+                echo "Skipping $csfile ($package has pre-release $proj_version matching latest stable $IVY_VERSION)"
+                continue
+              fi
+
+              # Do not downgrade to an older stable version if project is on a newer version
+              higher_version=$(printf "%s\n%s" "$proj_base" "$IVY_VERSION" | sort -V | tail -n1)
+              if [ "$higher_version" == "$proj_base" ] && [ "$proj_base" != "$IVY_VERSION" ]; then
+                echo "Skipping $csfile ($package has newer version $proj_version than latest stable $IVY_VERSION)"
+                continue
+              fi
+
+              echo "Updating: $csfile ($package) from $proj_version to $IVY_VERSION"
+              sed -i "s|^#:package ${package}@[^ ]*|#:package ${package}@${IVY_VERSION}|g" "$csfile"
+            done
+          done < <(grep -rl "^#:package Ivy" . --include="*.cs" -Z 2>/dev/null)
+
       - name: Save changes for commit
         id: save-changes
         run: |
@@ -417,6 +458,7 @@ jobs:
             **/*.csproj
             **/Directory.Packages.props
             **/*.props
+            **/*.cs
           retention-days: 1
 
   check-build-results:
