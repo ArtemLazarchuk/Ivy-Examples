@@ -24,7 +24,7 @@ public class StagingDeployService
     public string DocsDockerfile => _config["Staging:DocsDockerfile"] ?? "Dockerfile";
     public int ExpiryDays => int.TryParse(_config["Staging:ExpiryDays"], out var d) ? d : 7;
 
-    public async Task<StagingDeployResult> DeployBranchAsync(string apiToken, string branchName, int prNumber)
+    public async Task<StagingDeployResult> DeployBranchAsync(string apiToken, string branchName, int prNumber, string? samplesRepoOverride = null)
     {
         var projectId = _config["Sliplane:ProjectId"] ?? "";
         var serverId = _config["Sliplane:ServerId"] ?? "";
@@ -33,6 +33,9 @@ public class StagingDeployService
 
         var docsName = $"ivy-staging-docs-{prNumber}";
         var samplesName = $"ivy-staging-samples-{prNumber}";
+
+        // For fork PRs use the fork's clone URL so Sliplane can find the branch.
+        var samplesRepo = !string.IsNullOrEmpty(samplesRepoOverride) ? samplesRepoOverride : SamplesRepo;
 
         string? docsUrl = null;
         string? samplesUrl = null;
@@ -54,7 +57,7 @@ public class StagingDeployService
 
             var samplesResult = await _sliplane.CreateServiceAsync(
                 apiToken, projectId, serverId,
-                samplesName, SamplesRepo, branchName, SamplesDockerfile, SamplesContext);
+                samplesName, samplesRepo, branchName, SamplesDockerfile, SamplesContext);
             if (samplesResult.Service != null)
             {
                 samplesId = samplesResult.Service.Id;

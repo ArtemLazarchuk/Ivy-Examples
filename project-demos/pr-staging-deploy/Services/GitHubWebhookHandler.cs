@@ -88,6 +88,13 @@ public class GitHubWebhookHandler
         var owner = repoEl.GetProperty("owner").GetProperty("login").GetString() ?? "";
         var repoName = repoEl.GetProperty("name").GetString() ?? "";
 
+        // For fork PRs the head repo differs from the base repo.
+        // Sliplane must clone from the fork URL, otherwise the branch won't be found.
+        var headRepoEl = pr.GetProperty("head").GetProperty("repo");
+        var headRepoCloneUrl = headRepoEl.TryGetProperty("clone_url", out var cu)
+            ? cu.GetString()
+            : null;
+
         var apiToken = GetApiToken();
         if (string.IsNullOrEmpty(apiToken))
         {
@@ -169,7 +176,7 @@ public class GitHubWebhookHandler
                     forceNewComment: true);
 
                 _logger.LogInformation("PR #{Pr} opened: {Title} branch={Branch}", prNumber, title, branch);
-                var deployResult = await _deployService.DeployBranchAsync(apiToken, branch, prNumber);
+                var deployResult = await _deployService.DeployBranchAsync(apiToken, branch, prNumber, headRepoCloneUrl);
                 _logger.LogInformation("Deploy result: {Success} - {Message}", deployResult.Success, deployResult.Message);
                 if (deployResult.Success)
                 {
@@ -230,42 +237,54 @@ public class GitHubWebhookHandler
                 _logger.LogInformation("PR #{Pr} updated: {Branch}", prNumber, branch);
                 var redeployResult = await _deployService.RedeployBranchAsync(apiToken, branch, prNumber);
                 _logger.LogInformation("Redeploy result: {Success} - {Message}", redeployResult.Success, redeployResult.Message);
-                if (redeployResult.Success)
-                {
-                    var dep = await _deployService.GetDeploymentByPrNumberAsync(apiToken, prNumber);
 
-                    if (dep is null || string.IsNullOrEmpty(dep.DocsServiceId) || string.IsNullOrEmpty(dep.SamplesServiceId))
+                if (!redeployResult.Success)
+                {
+                    // Services don't exist yet (e.g. first push, or staging was deleted).
+                    // Fall back to a fresh deploy instead of reporting a failure.
+                    _logger.LogInformation("PR #{Pr} redeploy found 0 services, falling back to fresh deploy", prNumber);
+                    var fallbackResult = await _deployService.DeployBranchAsync(apiToken, branch, prNumber, headRepoCloneUrl);
+                    _logger.LogInformation("Fallback deploy result: {Success} - {Message}", fallbackResult.Success, fallbackResult.Message);
+
+                    if (fallbackResult.Success && (!string.IsNullOrEmpty(fallbackResult.DocsServiceId) || !string.IsNullOrEmpty(fallbackResult.SamplesServiceId)))
+                    {
+                        await _commentUpdateQueue.EnqueueAsync(new PrStagingDeployCommentUpdateRequest(
+                            Owner: owner,
+                            Repo: repoName,
+                            PrNumber: prNumber,
+                            BranchName: branch,
+                            DocsServiceId: fallbackResult.DocsServiceId,
+                            SamplesServiceId: fallbackResult.SamplesServiceId));
+                    }
+                    else
                     {
                         await _prComments.TryPostOrUpdateStagingCommentAsync(
-                            owner,
-                            repoName,
-                            prNumber,
-                            docsUrl: null,
-                            samplesUrl: null,
+                            owner, repoName, prNumber,
+                            docsUrl: null, samplesUrl: null,
                             status: "Deploy failed",
-                            logLines: new[] { "Redeploy: docs/samples services not found in Sliplane." });
-                        break;
+                            logLines: new[] { TruncLine(fallbackResult.Message, 240) });
                     }
-
-                    await _commentUpdateQueue.EnqueueAsync(new PrStagingDeployCommentUpdateRequest(
-                        Owner: owner,
-                        Repo: repoName,
-                        PrNumber: prNumber,
-                        BranchName: branch,
-                        DocsServiceId: dep.DocsServiceId,
-                        SamplesServiceId: dep.SamplesServiceId));
+                    break;
                 }
-                else
+
+                var syncDep = await _deployService.GetDeploymentByPrNumberAsync(apiToken, prNumber);
+                if (syncDep is null || string.IsNullOrEmpty(syncDep.DocsServiceId) || string.IsNullOrEmpty(syncDep.SamplesServiceId))
                 {
                     await _prComments.TryPostOrUpdateStagingCommentAsync(
-                        owner,
-                        repoName,
-                        prNumber,
-                        docsUrl: null,
-                        samplesUrl: null,
-                        status: "Redeploy failed",
-                        logLines: new[] { TruncLine(redeployResult.Message, 240) });
+                        owner, repoName, prNumber,
+                        docsUrl: null, samplesUrl: null,
+                        status: "Deploy failed",
+                        logLines: new[] { "Redeploy: docs/samples services not found in Sliplane." });
+                    break;
                 }
+
+                await _commentUpdateQueue.EnqueueAsync(new PrStagingDeployCommentUpdateRequest(
+                    Owner: owner,
+                    Repo: repoName,
+                    PrNumber: prNumber,
+                    BranchName: branch,
+                    DocsServiceId: syncDep.DocsServiceId,
+                    SamplesServiceId: syncDep.SamplesServiceId));
 
                 break;
 
