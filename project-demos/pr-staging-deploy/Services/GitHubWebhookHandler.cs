@@ -109,8 +109,8 @@ public class GitHubWebhookHandler
                     break;
                 }
 
-                // Check if staging services already exist for this branch.
-                var existingDepOnOpen = await _deployService.GetDeploymentByBranchAsync(apiToken, branch);
+                // Check if staging services already exist for this PR.
+                var existingDepOnOpen = await _deployService.GetDeploymentByPrNumberAsync(apiToken, prNumber);
                 if (existingDepOnOpen != null)
                 {
                     _logger.LogInformation(
@@ -169,7 +169,7 @@ public class GitHubWebhookHandler
                     forceNewComment: true);
 
                 _logger.LogInformation("PR #{Pr} opened: {Title} branch={Branch}", prNumber, title, branch);
-                var deployResult = await _deployService.DeployBranchAsync(apiToken, branch);
+                var deployResult = await _deployService.DeployBranchAsync(apiToken, branch, prNumber);
                 _logger.LogInformation("Deploy result: {Success} - {Message}", deployResult.Success, deployResult.Message);
                 if (deployResult.Success)
                 {
@@ -228,11 +228,11 @@ public class GitHubWebhookHandler
                     forceNewComment: true);
 
                 _logger.LogInformation("PR #{Pr} updated: {Branch}", prNumber, branch);
-                var redeployResult = await _deployService.RedeployBranchAsync(apiToken, branch);
+                var redeployResult = await _deployService.RedeployBranchAsync(apiToken, branch, prNumber);
                 _logger.LogInformation("Redeploy result: {Success} - {Message}", redeployResult.Success, redeployResult.Message);
                 if (redeployResult.Success)
                 {
-                    var dep = await _deployService.GetDeploymentByBranchAsync(apiToken, branch);
+                    var dep = await _deployService.GetDeploymentByPrNumberAsync(apiToken, prNumber);
 
                     if (dep is null || string.IsNullOrEmpty(dep.DocsServiceId) || string.IsNullOrEmpty(dep.SamplesServiceId))
                     {
@@ -271,7 +271,7 @@ public class GitHubWebhookHandler
 
             case "closed":
                 _logger.LogInformation("PR #{Pr} closed: {Branch} — removing Sliplane staging services", prNumber, branch);
-                var deleteResult = await _deployService.DeleteBranchAsync(apiToken, branch);
+                var deleteResult = await _deployService.DeleteBranchAsync(apiToken, prNumber);
                 _logger.LogInformation("Delete result: {Success} - {Message}", deleteResult.Success, deleteResult.Message);
                 if (deleteResult.Success)
                     await _prComments.TryPostOrUpdateStagingCommentAsync(
@@ -338,8 +338,8 @@ public class GitHubWebhookHandler
         // Let users know the bot read the `/deploy` command.
         await _prComments.TryAddRocketReactionAsync(owner, repo, commentId);
 
-        // Check if services already exist for this branch — avoid creating duplicates.
-        var existingDep = await _deployService.GetDeploymentByBranchAsync(apiToken, branch);
+        // Check if services already exist for this PR — avoid creating duplicates.
+        var existingDep = await _deployService.GetDeploymentByPrNumberAsync(apiToken, prNumber);
         if (existingDep != null)
         {
             _logger.LogInformation(
@@ -400,7 +400,7 @@ public class GitHubWebhookHandler
             forceNewComment: true);
 
         _logger.LogInformation("PR #{Pr} /deploy comment: {Branch}", prNumber, branch);
-        var result = await _deployService.DeployBranchAsync(apiToken, branch);
+        var result = await _deployService.DeployBranchAsync(apiToken, branch, prNumber);
         _logger.LogInformation("Deploy result: {Success} - {Message}", result.Success, result.Message);
         if (result.Success)
         {
