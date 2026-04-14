@@ -24,7 +24,7 @@ RUN dotnet publish "SnowflakeExample.csproj" -c $BUILD_CONFIGURATION -o /app/pub
 # Final runtime image
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=publish /app/deploy .
 
 # Set environment variables
 ENV PORT=80
