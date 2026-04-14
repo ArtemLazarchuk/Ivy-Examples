@@ -62,6 +62,15 @@ public class DeployView : ViewBase
             Healthcheck = "/",
         });
 
+        var resolvedForSliplane = this.UseQuery<DockerfileResolution?, (string, string, string, string)>(
+            key: (
+                model.Value.GitRepo ?? "",
+                model.Value.Branch ?? "",
+                model.Value.DockerfilePath ?? "",
+                model.Value.DockerContext ?? ""),
+            fetcher: async (key, ct) =>
+                await dockerfileResolver.ResolveAsync(key.Item1, key.Item2, key.Item3, key.Item4, ct));
+
         var reloadCounter = this.UseState(0);
         var deployedService = this.UseState<(string ProjectId, SliplaneService Service)?>(() => null);
         var deployError = this.UseState<string?>(() => null);
@@ -152,10 +161,27 @@ public class DeployView : ViewBase
                 ? new Callout(validationView, "Please fix the following", CalloutVariant.Error)
                 : validationView);
 
+        object? buildHint = new Fragment();
+        if (resolvedForSliplane.Value is { } r
+            && !string.IsNullOrWhiteSpace(model.Value.GitRepo))
+        {
+            buildHint = new Callout(
+                Layout.Vertical()
+                    | Text.Block("Build settings this deploy will send (no Dockerfile in the app folder → shared default when missing on GitHub):").Bold()
+                    | Text.Block($"Dockerfile path: {r.DockerfilePath}")
+                    | Text.Block($"Docker context: {r.DockerContext}")
+                    | Text.Block(
+                        "If you test in the Sliplane dashboard instead, use the same two values. The Dockerfile path must be from the repository root (for example .github/docker/Dockerfile.ivy-default). Do not use ../../.github/… — that path often resolves to an empty file."),
+                "Docker build",
+                CalloutVariant.Info);
+        }
+
         var cardContent = Layout.Vertical()
             | headerSection
             | new Separator()
             | formView
+            | new Separator()
+            | buildHint
             | new Spacer()
             | actionsRow;
 
