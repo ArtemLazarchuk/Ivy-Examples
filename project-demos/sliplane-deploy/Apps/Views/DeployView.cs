@@ -123,7 +123,7 @@ public class DeployView : ViewBase
                         dockerContext: resolution.DockerContext, autoDeploy: m.AutoDeploy,
                         networkPublic: m.NetworkPublic, networkProtocol: m.NetworkProtocol,
                         cmd: m.Cmd ?? string.Empty, healthcheck: m.Healthcheck,
-                        env: resolution.AdditionalEnv, volumeMounts: []));
+                        env: [], volumeMounts: []));
 
                 if (service != null)
                     deployedService.Set((m.ProjectId, service));

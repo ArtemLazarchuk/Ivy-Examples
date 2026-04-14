@@ -2,21 +2,18 @@ namespace SliplaneDeploy.Services;
 
 using System.Net;
 using System.Text.RegularExpressions;
-using SliplaneDeploy.Models;
 
 /// <summary>
-/// Resolved paths for Sliplane git deploy. When the repo has no Dockerfile at the requested path,
-/// falls back to the configured default Dockerfile path and, for monorepo subfolders, uses
-/// repository root as Docker context plus <c>IVY_APP_DIR</c> so the shared Dockerfile can copy the app.
+/// Result of resolving which Dockerfile and Docker context to send to Sliplane.
 /// </summary>
-public record DockerfileResolution(
-    string DockerfilePath,
-    string DockerContext,
-    IReadOnlyList<EnvironmentVariable>? AdditionalEnv = null);
+public record DockerfileResolution(string DockerfilePath, string DockerContext);
 
 /// <summary>
 /// If the requested Dockerfile is missing from a GitHub repo, returns a repository-relative path
 /// to a shared default Dockerfile (must exist on the same default branch / fork).
+/// Docker context stays the app folder (e.g. <c>project-demos/book-library</c>); the Dockerfile path
+/// is from the repo root (e.g. <c>.github/docker/Dockerfile.ivy-default</c>) so <c>docker build -f … context</c>
+/// matches normal Docker behaviour: <c>COPY . .</c> only sees that folder.
 /// </summary>
 public class GitHubDockerfilePathResolver
 {
@@ -46,9 +43,8 @@ public class GitHubDockerfilePathResolver
     }
 
     /// <summary>
-    /// Resolves Dockerfile path and Docker context for Sliplane. When the shared default Dockerfile
-    /// is used with a non-root context, returns <see cref="DockerContext"/> as "." and sets
-    /// <c>IVY_APP_DIR</c> (available during build on Sliplane) for the shared Ivy Dockerfile.
+    /// Resolves Dockerfile path and Docker context. When falling back to the shared Dockerfile,
+    /// keeps <paramref name="dockerContext"/> as the app directory (monorepo subfolder).
     /// </summary>
     public async Task<DockerfileResolution> ResolveAsync(
         string? gitRepoUrl,
@@ -73,29 +69,7 @@ public class GitHubDockerfilePathResolver
         if (!await ExistsOnGitHubRawAsync(owner, repo, branchTrim, fallback, cancellationToken).ConfigureAwait(false))
             return new DockerfileResolution(path, contextTrim);
 
-        if (!IsNonRootRepositoryContext(contextTrim))
-            return new DockerfileResolution(fallback, contextTrim);
-
-        var ivyAppDir = NormalizeRepoRelativePath(contextTrim);
-        return new DockerfileResolution(
-            fallback,
-            DockerContext: ".",
-            AdditionalEnv: [new EnvironmentVariable("IVY_APP_DIR", ivyAppDir, Secret: false)]);
-    }
-
-    private static bool IsNonRootRepositoryContext(string dockerContext)
-    {
-        var t = dockerContext.Replace('\\', '/').Trim().Trim('/');
-        return t.Length != 0 && !string.Equals(t, ".", StringComparison.Ordinal);
-    }
-
-    /// <summary>Repo-relative path with forward slashes, no leading/trailing slashes.</summary>
-    private static string NormalizeRepoRelativePath(string dockerContext)
-    {
-        var t = dockerContext.Replace('\\', '/').Trim().Trim('/');
-        while (t.StartsWith("./", StringComparison.Ordinal))
-            t = t[2..];
-        return t;
+        return new DockerfileResolution(fallback, contextTrim);
     }
 
     private async Task<bool> ExistsOnGitHubRawAsync(string owner, string repo, string branch, string repoRelativePath, CancellationToken cancellationToken)

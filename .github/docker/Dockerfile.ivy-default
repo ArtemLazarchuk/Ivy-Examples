@@ -1,25 +1,15 @@
-# Generic Ivy / .NET sample.
-# - Single-app repo (one *.csproj at repo root): Docker context = repo root, no env needed.
-# - Monorepo subfolder (e.g. project-demos/book-library): set Docker context to repo root and
-#   set IVY_APP_DIR to the repo-relative app path (Sliplane injects service env during build).
+# Generic Ivy / .NET sample: build context must be the folder that contains a single *.csproj
+# (often the app root). Dockerfile path is repo-relative, e.g. .github/docker/Dockerfile.ivy-default
+# — use that path from the repository root, not ../../…
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
 EXPOSE 80
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
-WORKDIR /repo
-COPY . .
 WORKDIR /src
+COPY . .
 RUN set -eux; \
-    sub="${IVY_APP_DIR:-.}"; \
-    if [ -z "$sub" ]; then sub=.; fi; \
-    case "$sub" in .|./) cp -a /repo/. /src/ ;; \
-      *) \
-        case "$sub" in *..*) echo "invalid IVY_APP_DIR"; exit 1 ;; esac; \
-        test -d "/repo/$sub"; \
-        cp -a "/repo/$sub"/. /src/ ;; \
-    esac; \
     proj="$(ls -1 *.csproj | head -n1)"; \
     test -n "$proj"; \
     dotnet restore "$proj"; \
