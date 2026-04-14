@@ -2,6 +2,17 @@ namespace SliplaneDeploy.Services;
 
 using System.Net;
 using System.Text.RegularExpressions;
+using SliplaneDeploy.Models;
+
+/// <summary>
+/// Resolved paths for Sliplane git deploy. When the repo has no Dockerfile at the requested path,
+/// falls back to the configured default Dockerfile path and, for monorepo subfolders, uses
+/// repository root as Docker context plus <c>IVY_APP_DIR</c> so the shared Dockerfile can copy the app.
+/// </summary>
+public record DockerfileResolution(
+    string DockerfilePath,
+    string DockerContext,
+    IReadOnlyList<EnvironmentVariable>? AdditionalEnv = null);
 
 /// <summary>
 /// If the requested Dockerfile is missing from a GitHub repo, returns a repository-relative path
@@ -35,26 +46,56 @@ public class GitHubDockerfilePathResolver
     }
 
     /// <summary>
-    /// Returns the Dockerfile path to send to Sliplane (unchanged if probe is skipped or inconclusive).
+    /// Resolves Dockerfile path and Docker context for Sliplane. When the shared default Dockerfile
+    /// is used with a non-root context, returns <see cref="DockerContext"/> as "." and sets
+    /// <c>IVY_APP_DIR</c> (available during build on Sliplane) for the shared Ivy Dockerfile.
     /// </summary>
-    public async Task<string> ResolveAsync(string? gitRepoUrl, string branch, string dockerfilePath, CancellationToken cancellationToken = default)
+    public async Task<DockerfileResolution> ResolveAsync(
+        string? gitRepoUrl,
+        string branch,
+        string dockerfilePath,
+        string dockerContext,
+        CancellationToken cancellationToken = default)
     {
+        var contextTrim = string.IsNullOrWhiteSpace(dockerContext) ? "." : dockerContext.Trim();
         var path = string.IsNullOrWhiteSpace(dockerfilePath) ? "Dockerfile" : dockerfilePath.Trim();
         if (!TryParseGitHubRepo(gitRepoUrl, out var owner, out var repo))
-            return path;
+            return new DockerfileResolution(path, contextTrim);
 
         var branchTrim = string.IsNullOrWhiteSpace(branch) ? "main" : branch.Trim();
         if (await ExistsOnGitHubRawAsync(owner, repo, branchTrim, path, cancellationToken).ConfigureAwait(false))
-            return path;
+            return new DockerfileResolution(path, contextTrim);
 
         var fallback = (_configuration["Sliplane:DefaultDockerfilePath"] ?? ".github/docker/Dockerfile.ivy-default").Trim();
         if (string.IsNullOrEmpty(fallback) || string.Equals(fallback, path, StringComparison.Ordinal))
-            return path;
+            return new DockerfileResolution(path, contextTrim);
 
-        if (await ExistsOnGitHubRawAsync(owner, repo, branchTrim, fallback, cancellationToken).ConfigureAwait(false))
-            return fallback;
+        if (!await ExistsOnGitHubRawAsync(owner, repo, branchTrim, fallback, cancellationToken).ConfigureAwait(false))
+            return new DockerfileResolution(path, contextTrim);
 
-        return path;
+        if (!IsNonRootRepositoryContext(contextTrim))
+            return new DockerfileResolution(fallback, contextTrim);
+
+        var ivyAppDir = NormalizeRepoRelativePath(contextTrim);
+        return new DockerfileResolution(
+            fallback,
+            DockerContext: ".",
+            AdditionalEnv: [new EnvironmentVariable("IVY_APP_DIR", ivyAppDir, Secret: false)]);
+    }
+
+    private static bool IsNonRootRepositoryContext(string dockerContext)
+    {
+        var t = dockerContext.Replace('\\', '/').Trim().Trim('/');
+        return t.Length != 0 && !string.Equals(t, ".", StringComparison.Ordinal);
+    }
+
+    /// <summary>Repo-relative path with forward slashes, no leading/trailing slashes.</summary>
+    private static string NormalizeRepoRelativePath(string dockerContext)
+    {
+        var t = dockerContext.Replace('\\', '/').Trim().Trim('/');
+        while (t.StartsWith("./", StringComparison.Ordinal))
+            t = t[2..];
+        return t;
     }
 
     private async Task<bool> ExistsOnGitHubRawAsync(string owner, string repo, string branch, string repoRelativePath, CancellationToken cancellationToken)

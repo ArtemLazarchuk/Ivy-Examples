@@ -114,15 +114,16 @@ public class DeployView : ViewBase
             isDeploying.Set(true);
             try
             {
-                var resolvedDockerfile = await dockerfileResolver.ResolveAsync(m.GitRepo, m.Branch, m.DockerfilePath);
+                var resolution = await dockerfileResolver.ResolveAsync(
+                    m.GitRepo, m.Branch, m.DockerfilePath, m.DockerContext);
                 var service = await client.CreateServiceAsync(_apiToken, m.ProjectId,
                     ServiceRequestFactory.BuildCreateRequest(
                         name: m.Name, serverId: m.ServerId, gitRepo: m.GitRepo,
-                        branch: m.Branch, dockerfilePath: resolvedDockerfile,
-                        dockerContext: m.DockerContext, autoDeploy: m.AutoDeploy,
+                        branch: m.Branch, dockerfilePath: resolution.DockerfilePath,
+                        dockerContext: resolution.DockerContext, autoDeploy: m.AutoDeploy,
                         networkPublic: m.NetworkPublic, networkProtocol: m.NetworkProtocol,
                         cmd: m.Cmd ?? string.Empty, healthcheck: m.Healthcheck,
-                        env: [], volumeMounts: []));
+                        env: resolution.AdditionalEnv, volumeMounts: []));
 
                 if (service != null)
                     deployedService.Set((m.ProjectId, service));
