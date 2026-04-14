@@ -62,15 +62,6 @@ public class DeployView : ViewBase
             Healthcheck = "/",
         });
 
-        var resolvedForSliplane = this.UseQuery<DockerfileResolution?, (string, string, string, string)>(
-            key: (
-                model.Value.GitRepo ?? "",
-                model.Value.Branch ?? "",
-                model.Value.DockerfilePath ?? "",
-                model.Value.DockerContext ?? ""),
-            fetcher: async (key, ct) =>
-                await dockerfileResolver.ResolveAsync(key.Item1, key.Item2, key.Item3, key.Item4, ct));
-
         var reloadCounter = this.UseState(0);
         var deployedService = this.UseState<(string ProjectId, SliplaneService Service)?>(() => null);
         var deployError = this.UseState<string?>(() => null);
@@ -162,29 +153,10 @@ public class DeployView : ViewBase
                 ? new Callout(validationView, "Please fix the following", CalloutVariant.Error)
                 : validationView);
 
-        object? buildHint = new Fragment();
-        if (resolvedForSliplane.Value is { } r
-            && !string.IsNullOrWhiteSpace(model.Value.GitRepo))
-        {
-            var envLine = r.AdditionalEnv is { Count: > 0 }
-                ? string.Join(", ", r.AdditionalEnv.Select(e => $"{e.Key}={e.Value}"))
-                : "—";
-            buildHint = new Callout(
-                Layout.Vertical()
-                    | Text.Block("Build settings (auto-resolved):").Bold()
-                    | Text.Block($"Dockerfile: {r.DockerfilePath}")
-                    | Text.Block($"Context: {r.DockerContext}")
-                    | Text.Block($"Extra env: {envLine}"),
-                "Docker build",
-                CalloutVariant.Info);
-        }
-
         var cardContent = Layout.Vertical()
             | headerSection
             | new Separator()
             | formView
-            | new Separator()
-            | buildHint
             | new Spacer()
             | actionsRow;
 
