@@ -5,7 +5,7 @@
 Book Library is a compact Ivy sample app for tracking a personal reading list: a **dashboard** with metrics and charts plus **My Books** with full CRUD (list, details, create, edit, delete). Data is stored in **SQLite** with a small relational model: **Authors**, **Genres**, and **Books** linked by foreign keys.
 
 <p align="center">
-  <a href="https://ivy-sliplane-deployment.sliplane.app/sliplane-deploy-app?repo=https://github.com/ArtemLazarchuk/Ivy-Examples/tree/main/project-demos/book-library">
+  <a href="https://localhost:5010/sliplane-deploy-app?repo=https://github.com/ArtemLazarchuk/Ivy-Examples/tree/main/project-demos/book-library">
     <img src="https://raw.githubusercontent.com/Ivy-Interactive/Ivy-Examples/main/project-demos/sliplane-manage/Assets/deploy-button.svg"
          alt="Host your Ivy app on Sliplane" />
   </a>
