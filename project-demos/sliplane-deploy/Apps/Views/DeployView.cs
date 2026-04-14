@@ -46,6 +46,7 @@ public class DeployView : ViewBase
     {
         var client = this.UseService<SliplaneApiClient>();
         var config = this.UseService<IConfiguration>();
+        var dockerfileResolver = this.UseService<GitHubDockerfilePathResolver>();
         var model = this.UseState(() => new DeployFormModel
         {
             ServerId = _defaultServerId,
@@ -113,10 +114,11 @@ public class DeployView : ViewBase
             isDeploying.Set(true);
             try
             {
+                var resolvedDockerfile = await dockerfileResolver.ResolveAsync(m.GitRepo, m.Branch, m.DockerfilePath);
                 var service = await client.CreateServiceAsync(_apiToken, m.ProjectId,
                     ServiceRequestFactory.BuildCreateRequest(
                         name: m.Name, serverId: m.ServerId, gitRepo: m.GitRepo,
-                        branch: m.Branch, dockerfilePath: m.DockerfilePath,
+                        branch: m.Branch, dockerfilePath: resolvedDockerfile,
                         dockerContext: m.DockerContext, autoDeploy: m.AutoDeploy,
                         networkPublic: m.NetworkPublic, networkProtocol: m.NetworkProtocol,
                         cmd: m.Cmd ?? string.Empty, healthcheck: m.Healthcheck,
