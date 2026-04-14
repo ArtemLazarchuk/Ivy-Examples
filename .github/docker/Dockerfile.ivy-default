@@ -1,0 +1,26 @@
+# Generic Ivy / .NET sample: expects a single *.csproj at the root of the Docker build context.
+# Used when a project has no Dockerfile but deploy points at this path (see sliplane-deploy).
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+WORKDIR /app
+EXPOSE 80
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
+COPY . .
+RUN set -eux; \
+    proj="$(ls -1 *.csproj | head -n1)"; \
+    test -n "$proj"; \
+    dotnet restore "$proj"; \
+    dotnet build "$proj" -c "$BUILD_CONFIGURATION" -o /app/build; \
+    dotnet publish "$proj" -c "$BUILD_CONFIGURATION" -o /app/publish /p:UseAppHost=true; \
+    stem="$(basename "$proj" .csproj)"; \
+    printf '%s\n' '#!/bin/sh' "exec dotnet /app/${stem}.dll" > /app/publish/entrypoint.sh; \
+    chmod +x /app/publish/entrypoint.sh
+
+FROM base AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+ENV PORT=80
+ENV ASPNETCORE_URLS=http://+:80
+ENTRYPOINT ["/app/entrypoint.sh"]
