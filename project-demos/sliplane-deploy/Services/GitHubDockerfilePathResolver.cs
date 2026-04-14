@@ -2,18 +2,21 @@ namespace SliplaneDeploy.Services;
 
 using System.Net;
 using System.Text.RegularExpressions;
+using SliplaneDeploy.Models;
 
 /// <summary>
-/// Result of resolving which Dockerfile and Docker context to send to Sliplane.
+/// Result of resolving which Dockerfile path, Docker context, and extra env vars to send to Sliplane.
 /// </summary>
-public record DockerfileResolution(string DockerfilePath, string DockerContext);
+public record DockerfileResolution(
+    string DockerfilePath,
+    string DockerContext,
+    IReadOnlyList<EnvironmentVariable>? AdditionalEnv = null);
 
 /// <summary>
-/// If the requested Dockerfile is missing from a GitHub repo, returns a repository-relative path
-/// to a shared default Dockerfile (must exist on the same default branch / fork).
-/// Docker context stays the app folder (e.g. <c>project-demos/book-library</c>); the Dockerfile path
-/// is from the repo root (e.g. <c>.github/docker/Dockerfile.ivy-default</c>) so <c>docker build -f … context</c>
-/// matches normal Docker behaviour: <c>COPY . .</c> only sees that folder.
+/// When the app folder has no Dockerfile, falls back to <c>.github/docker/Dockerfile.ivy-default</c>.
+/// For monorepo subfolders the context is switched to repo root (<c>"."</c>) so the shared Dockerfile
+/// is inside the build context, and <c>IVY_APP_DIR</c> is passed as an env/build-arg so the Dockerfile
+/// knows which subfolder to build.
 /// </summary>
 public class GitHubDockerfilePathResolver
 {
@@ -43,8 +46,7 @@ public class GitHubDockerfilePathResolver
     }
 
     /// <summary>
-    /// Resolves Dockerfile path and Docker context. When falling back to the shared Dockerfile,
-    /// keeps <paramref name="dockerContext"/> as the app directory (monorepo subfolder).
+    /// Resolves Dockerfile path, Docker context and optional extra env vars for creating a Sliplane service.
     /// </summary>
     public async Task<DockerfileResolution> ResolveAsync(
         string? gitRepoUrl,
@@ -59,9 +61,12 @@ public class GitHubDockerfilePathResolver
             return new DockerfileResolution(path, contextTrim);
 
         var branchTrim = string.IsNullOrWhiteSpace(branch) ? "main" : branch.Trim();
+
+        // 1. If the requested Dockerfile exists on GitHub, use it as-is.
         if (await ExistsOnGitHubRawAsync(owner, repo, branchTrim, path, cancellationToken).ConfigureAwait(false))
             return new DockerfileResolution(path, contextTrim);
 
+        // 2. Try the shared default Dockerfile.
         var fallback = (_configuration["Sliplane:DefaultDockerfilePath"] ?? ".github/docker/Dockerfile.ivy-default").Trim();
         if (string.IsNullOrEmpty(fallback) || string.Equals(fallback, path, StringComparison.Ordinal))
             return new DockerfileResolution(path, contextTrim);
@@ -69,7 +74,27 @@ public class GitHubDockerfilePathResolver
         if (!await ExistsOnGitHubRawAsync(owner, repo, branchTrim, fallback, cancellationToken).ConfigureAwait(false))
             return new DockerfileResolution(path, contextTrim);
 
-        return new DockerfileResolution(fallback, contextTrim);
+        // 3. Shared Dockerfile exists. Switch context to repo root so the Dockerfile is inside the
+        //    build context (avoids Sliplane rewriting to ../../… which uploads as 2B).
+        //    Pass IVY_APP_DIR so the Dockerfile knows which subfolder contains the *.csproj.
+        var appDir = NormalizeRepoRelativePath(contextTrim);
+        List<EnvironmentVariable>? extraEnv = null;
+        if (appDir.Length > 0 && appDir != ".")
+            extraEnv = [new EnvironmentVariable("IVY_APP_DIR", appDir, Secret: false)];
+
+        return new DockerfileResolution(
+            DockerfilePath: fallback,
+            DockerContext: ".",
+            AdditionalEnv: extraEnv);
+    }
+
+    /// <summary>Normalize to forward-slash path without leading ./ or trailing /.</summary>
+    private static string NormalizeRepoRelativePath(string dockerContext)
+    {
+        var t = dockerContext.Replace('\\', '/').Trim().Trim('/');
+        while (t.StartsWith("./", StringComparison.Ordinal))
+            t = t[2..];
+        return string.IsNullOrEmpty(t) ? "." : t;
     }
 
     private async Task<bool> ExistsOnGitHubRawAsync(string owner, string repo, string branch, string repoRelativePath, CancellationToken cancellationToken)

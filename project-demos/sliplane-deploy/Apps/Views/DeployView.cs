@@ -125,6 +125,7 @@ public class DeployView : ViewBase
             {
                 var resolution = await dockerfileResolver.ResolveAsync(
                     m.GitRepo, m.Branch, m.DockerfilePath, m.DockerContext);
+                var envVars = resolution.AdditionalEnv?.ToList() ?? [];
                 var service = await client.CreateServiceAsync(_apiToken, m.ProjectId,
                     ServiceRequestFactory.BuildCreateRequest(
                         name: m.Name, serverId: m.ServerId, gitRepo: m.GitRepo,
@@ -132,7 +133,7 @@ public class DeployView : ViewBase
                         dockerContext: resolution.DockerContext, autoDeploy: m.AutoDeploy,
                         networkPublic: m.NetworkPublic, networkProtocol: m.NetworkProtocol,
                         cmd: m.Cmd ?? string.Empty, healthcheck: m.Healthcheck,
-                        env: [], volumeMounts: []));
+                        env: envVars, volumeMounts: []));
 
                 if (service != null)
                     deployedService.Set((m.ProjectId, service));
@@ -165,13 +166,15 @@ public class DeployView : ViewBase
         if (resolvedForSliplane.Value is { } r
             && !string.IsNullOrWhiteSpace(model.Value.GitRepo))
         {
+            var envLine = r.AdditionalEnv is { Count: > 0 }
+                ? string.Join(", ", r.AdditionalEnv.Select(e => $"{e.Key}={e.Value}"))
+                : "—";
             buildHint = new Callout(
                 Layout.Vertical()
-                    | Text.Block("Build settings this deploy will send (no Dockerfile in the app folder → shared default when missing on GitHub):").Bold()
-                    | Text.Block($"Dockerfile path: {r.DockerfilePath}")
-                    | Text.Block($"Docker context: {r.DockerContext}")
-                    | Text.Block(
-                        "If you test in the Sliplane dashboard instead, use the same two values. The Dockerfile path must be from the repository root (for example .github/docker/Dockerfile.ivy-default). Do not use ../../.github/… — that path often resolves to an empty file."),
+                    | Text.Block("Build settings (auto-resolved):").Bold()
+                    | Text.Block($"Dockerfile: {r.DockerfilePath}")
+                    | Text.Block($"Context: {r.DockerContext}")
+                    | Text.Block($"Extra env: {envLine}"),
                 "Docker build",
                 CalloutVariant.Info);
         }

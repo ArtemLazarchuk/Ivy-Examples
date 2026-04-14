@@ -1,17 +1,32 @@
-# Generic Ivy / .NET sample: build context must be the folder that contains a single *.csproj
-# (often the app root). Dockerfile path is repo-relative, e.g. .github/docker/Dockerfile.ivy-default
-# — use that path from the repository root, not ../../…
+# Generic Ivy / .NET sample.
+#
+# Single-project repos: Docker context = repo root (or project folder), no extra config needed.
+#
+# Monorepos (subfolder deploys via sliplane-deploy):
+#   Docker context  = "."  (repo root, so this Dockerfile is inside the context)
+#   Dockerfile path = ".github/docker/Dockerfile.ivy-default"
+#   IVY_APP_DIR     = repo-relative path to the app folder (e.g. "project-demos/book-library")
+#   → Sliplane passes env vars as --build-arg during build, so ARG below picks it up.
+
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
 EXPOSE 80
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
+ARG IVY_APP_DIR=.
 WORKDIR /src
 COPY . .
 RUN set -eux; \
-    proj="$(ls -1 *.csproj | head -n1)"; \
-    test -n "$proj"; \
+    appdir="${IVY_APP_DIR}"; \
+    if [ -z "$appdir" ] || [ "$appdir" = "." ]; then appdir=.; fi; \
+    case "$appdir" in *..*) echo "ERROR: IVY_APP_DIR contains '..' — aborting"; exit 1 ;; esac; \
+    if [ "$appdir" != "." ]; then \
+      test -d "$appdir" || { echo "ERROR: IVY_APP_DIR=$appdir not found in build context"; ls -la; exit 1; }; \
+      cd "$appdir"; \
+    fi; \
+    proj="$(ls -1 *.csproj 2>/dev/null | head -n1)"; \
+    if [ -z "$proj" ]; then echo "ERROR: no *.csproj found in $(pwd)"; ls -la; exit 1; fi; \
     dotnet restore "$proj"; \
     dotnet build "$proj" -c "$BUILD_CONFIGURATION" -o /app/build; \
     dotnet publish "$proj" -c "$BUILD_CONFIGURATION" -o /app/publish /p:UseAppHost=true; \
