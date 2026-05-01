@@ -41,13 +41,21 @@ public class TendrilDeployFormModel
     [Required(ErrorMessage = "Enter your GitHub token")]
     public string GithubToken { get; set; } = "";
 
-    [Display(Name = "PORT", Order = 10)]
+    [Display(Name = "OpenAI API key (Codex CLI)", Order = 10,
+        Prompt = "OPENAI_API_KEY — optional; enables OpenAI Codex without `codex login` in the container")]
+    public string OpenAiApiKey { get; set; } = "";
+
+    [Display(Name = "Gemini API key (Gemini CLI)", Order = 11,
+        Prompt = "GEMINI_API_KEY — optional; headless auth for @google/gemini-cli (see Gemini CLI docs)")]
+    public string GeminiApiKey { get; set; } = "";
+
+    [Display(Name = "PORT", Order = 12)]
     public string Port { get; set; } = "8000";
 
-    [Display(Name = "TENDRIL_HOME", Order = 11)]
+    [Display(Name = "TENDRIL_HOME", Order = 13)]
     public string TendrilHome { get; set; } = "/data/tendril";
 
-    [Display(Name = "Volume ID (optional)", Order = 12,
+    [Display(Name = "Volume ID (optional)", Order = 14,
         Prompt = "Sliplane persistent volume — mount at TENDRIL_HOME")]
     public string? VolumeId { get; set; }
 
@@ -100,6 +108,8 @@ public class TendrilDeployView : ViewBase
                 VolumeId = ui.VolumeId,
                 AnthropicApiKey = config["TendrilDeploy:AnthropicApiKey"]?.Trim() ?? "",
                 GithubToken = config["TendrilDeploy:GithubToken"]?.Trim() ?? "",
+                OpenAiApiKey = config["TendrilDeploy:OpenAiApiKey"]?.Trim() ?? "",
+                GeminiApiKey = config["TendrilDeploy:GeminiApiKey"]?.Trim() ?? "",
                 AutoDeploy = true,
                 NetworkPublic = true,
                 NetworkProtocol = "http",
@@ -120,6 +130,8 @@ public class TendrilDeployView : ViewBase
             .Builder(m => m.Name, s => s.ToTextInput().Placeholder("e.g. ivy-tendril"))
             .Builder(m => m.AnthropicApiKey, b => b.ToPasswordInput(placeholder: "sk-ant-api03-…"))
             .Builder(m => m.GithubToken, b => b.ToPasswordInput(placeholder: "ghp_… or fine-grained PAT"))
+            .Builder(m => m.OpenAiApiKey, b => b.ToPasswordInput(placeholder: "sk-… (optional)"))
+            .Builder(m => m.GeminiApiKey, b => b.ToPasswordInput(placeholder: "optional — Gemini API key"))
             .Remove(m => m.ProjectId, m => m.GitRepo, m => m.Branch, m => m.DockerfilePath, m => m.DockerContext,
                 m => m.Port, m => m.TendrilHome, m => m.VolumeId,
                 m => m.AutoDeploy, m => m.NetworkPublic, m => m.NetworkProtocol,
@@ -193,6 +205,12 @@ public class TendrilDeployView : ViewBase
 
                 envVars.Add(new EnvironmentVariable("ANTHROPIC_API_KEY", anthropic, Secret: true));
                 envVars.Add(new EnvironmentVariable("GITHUB_TOKEN", github, Secret: true));
+                var openAi = (m.OpenAiApiKey ?? "").Trim();
+                if (openAi.Length > 0)
+                    envVars.Add(new EnvironmentVariable("OPENAI_API_KEY", openAi, Secret: true));
+                var gemini = (m.GeminiApiKey ?? "").Trim();
+                if (gemini.Length > 0)
+                    envVars.Add(new EnvironmentVariable("GEMINI_API_KEY", gemini, Secret: true));
                 envVars.Add(new EnvironmentVariable("PORT", port, Secret: false));
                 envVars.Add(new EnvironmentVariable("TENDRIL_HOME", home, Secret: false));
 
@@ -238,7 +256,9 @@ public class TendrilDeployView : ViewBase
 
         var headerSection = Layout.Vertical().AlignContent(Align.Center).Gap(4)
             | Text.H1("Deploy Tendril to Sliplane")
-            | Text.Lead("Pick server, service name, and tokens. Build settings use user-secrets / defaults.");
+            | Text.Lead(
+                "Pick server, service name, and required tokens (Anthropic + GitHub). Optional: OpenAI (Codex) and Gemini API keys. "
+                + "Build settings use user-secrets / defaults.");
 
         var actionsRow = Layout.Vertical()
             | (Layout.Horizontal().AlignContent(Align.Center)
