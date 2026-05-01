@@ -102,6 +102,7 @@ public class TendrilDeployView : ViewBase
         var geminiKey = UseState<string?>(() => SecretPrefill(config, "TendrilDeploy:GeminiApiKey"));
 
         var reloadCounter = UseState(0);
+        var stepIndex = UseState(0);
         var deployedService = UseState<(string ProjectId, SliplaneService Service)?>(() => null);
         var deployError = UseState<string?>(() => null);
         var validationFailed = UseState(false);
@@ -140,6 +141,18 @@ public class TendrilDeployView : ViewBase
 
         _ = QueryServers(Context, "");
         _ = LookupServer(Context, model.Value.ServerId);
+
+        async ValueTask AdvanceFromStep0Async()
+        {
+            validationFailed.Set(false);
+            if (!await onSubmit())
+            {
+                validationFailed.Set(true);
+                return;
+            }
+
+            stepIndex.Set(1);
+        }
 
         async ValueTask HandleDeploy()
         {
@@ -272,43 +285,105 @@ public class TendrilDeployView : ViewBase
         ).Icon(Icons.Sparkles).Width(Size.Full());
 
         var agentSections = Layout.Vertical().Gap(2).Width(Size.Full())
-            | Text.H4("Agents & credentials").Muted()
             | claudeExpandable
             | githubExpandable
             | openAiExpandable
             | geminiExpandable;
 
-        var headerSection = Layout.Vertical().AlignContent(Align.Center).Gap(4)
-            | Text.H1("Deploy Tendril to Sliplane")
-            | Text.Lead(
-                "Choose **server** and **service name**, then open each section below for **where to get** each secret and **which env var** it becomes. "
-                + "Empty fields are omitted (Sliplane rejects empty env values). Git / Dockerfile / volume defaults: user-secrets or `?repo=`.");
+        var stepperItems = new[]
+        {
+            new StepperItem("1", stepIndex.Value > 0 ? Icons.Check : null, "Welcome", "Server & name"),
+            new StepperItem("2", deployedService.Value != null ? Icons.Check : null, "Secrets", "API keys"),
+        };
 
-        var actionsRow = Layout.Vertical()
-            | (Layout.Horizontal().AlignContent(Align.Center)
-                | new Button("Deploy").Primary().Large()
-                    .Loading(loading || isDeploying.Value).Disabled(loading || isDeploying.Value)
-                    .Width(Size.Fraction(0.5f))
-                    .OnClick(async _ => await HandleDeploy()))
-            | (validationFailed.Value
-                ? new Callout(validationView, "Please fix the following", CalloutVariant.Error)
-                : validationView);
+        ValueTask OnStepperSelect(Event<Stepper, int> e)
+        {
+            if (e.Value < stepIndex.Value)
+                stepIndex.Set(e.Value);
+            return ValueTask.CompletedTask;
+        }
 
-        var cardContent = Layout.Vertical().Width(Size.Full())
-            | headerSection
-            | new Separator()
-            | formView
-            | new Separator()
-            | agentSections
-            | new Spacer()
-            | actionsRow;
+        var welcomeNoteCallout = new Callout(
+            Layout.Vertical().Gap(3)
+                | Text.Block(
+                    "Ivy Tendril is a coding orchestrator powered by agents like Claude Code, Codex, Gemini, or Copilot. "
+                    + "It is built to help you ship a lot of work quickly on your own infrastructure.")
+                | Text.Block("Please be aware that Tendril can consume tokens rapidly.").Bold(),
+            "Note",
+            CalloutVariant.Info);
+
+        var secretsHintCallout = new Callout(
+            Text.Markdown(
+                "**Optional** keys for your agents—each is a **secret** env var on Sliplane. "
+                + "Empty fields are ignored. Repo, Dockerfile, **PORT**, **TENDRIL_HOME**, and volume come from config or **`?repo=`**, not below."),
+            "Secrets",
+            CalloutVariant.Info);
+
+        object validationBlock = validationFailed.Value
+            ? new Callout(validationView, "Please fix the following", CalloutVariant.Error)
+            : new Empty();
+
+        var titleBlock = stepIndex.Value == 0
+            ? (object)(Layout.Vertical().Gap(2).AlignContent(Align.Center)
+                | Text.H1("Welcome to Ivy Tendril").Align(TextAlignment.Center))
+            : (object)(Layout.Vertical().Gap(2).AlignContent(Align.Center)
+                | Text.H1("API keys").Align(TextAlignment.Center));
+
+        var stepBody = stepIndex.Value == 0
+            ? (object)(Layout.Vertical().Gap(4).Width(Size.Full())
+                | welcomeNoteCallout
+                | formView
+                | validationBlock)
+            : (object)(Layout.Vertical().Gap(4).Width(Size.Full())
+                | secretsHintCallout
+                | agentSections);
+
+        object footerRow = stepIndex.Value == 0
+            ? (object)(Layout.Vertical().Width(Size.Full()).AlignContent(Align.Center)
+                | new Button("Get started")
+                    .Icon(Icons.ChevronRight, Align.Right)
+                    .Primary()
+                    .Large()
+                    .BorderRadius(BorderRadius.Full)
+                    .Width(Size.Full())
+                    .Loading(loading)
+                    .Disabled(loading)
+                    .OnClick(async _ => await AdvanceFromStep0Async()))
+            : (object)(Layout.Horizontal().Width(Size.Full()).Gap(4)
+                | new Button("Back")
+                    .Icon(Icons.ChevronLeft)
+                    .Variant(ButtonVariant.Outline)
+                    .Large()
+                    .BorderRadius(BorderRadius.Full)
+                    .Width(Size.Fraction(0.31f))
+                    .OnClick(_ => stepIndex.Set(0))
+                | new Spacer()
+                | new Button("Deploy")
+                    .Icon(Icons.Rocket, Align.Right)
+                    .Primary()
+                    .Large()
+                    .BorderRadius(BorderRadius.Full)
+                    .Width(Size.Fraction(0.31f))
+                    .Loading(loading || isDeploying.Value)
+                    .Disabled(loading || isDeploying.Value)
+                    .OnClick(async _ => await HandleDeploy()));
+
+        var stepperRow = Layout.Vertical().Width(Size.Full()).AlignContent(Align.Center)
+            | new Stepper(OnStepperSelect, stepIndex.Value, stepperItems).Width(Size.Full());
+
+        var mainFlow = Layout.Vertical().Width(Size.Full()).Gap(4).AlignContent(Align.Stretch)
+            | stepperRow
+            | titleBlock
+            | stepBody
+            | footerRow;
+
+        var pageBody = mainFlow;
 
         if (isDeploying.Value && deployedService.Value == null)
         {
-            cardContent = cardContent
-                | new Separator()
+            pageBody = pageBody
                 | new Callout(
-                    Layout.Vertical()
+                    Layout.Vertical().Gap(3)
                         | Text.Block("Creating Tendril service on Sliplane…").Bold()
                         | new Progress().Indeterminate().Goal("Please wait…"),
                     "Deploying",
@@ -316,15 +391,20 @@ public class TendrilDeployView : ViewBase
         }
         else if (deployedService.Value is { } deployed)
         {
-            cardContent = cardContent
-                | new Separator()
+            pageBody = pageBody
                 | new TendrilDeployStatusView(_apiToken, deployed.ProjectId, deployed.Service);
         }
 
         if (deployError.Value != null)
-            cardContent = cardContent | new Callout(deployError.Value, variant: CalloutVariant.Error);
+            pageBody = pageBody | new Callout(deployError.Value, variant: CalloutVariant.Error);
 
-        var card = new Card(cardContent).Width(Size.Fraction(0.5f));
+        var pageColumn = Layout.Vertical()
+            .Width(Size.Fraction(0.52f))
+            .Gap(2)
+            .Padding(new Thickness(16, 16, 16, 16))
+            .AlignContent(Align.Stretch)
+            | pageBody;
+
         var manageServicesUrl = config["Sliplane:ManageServicesUrl"]?.Trim();
         if (string.IsNullOrEmpty(manageServicesUrl))
             manageServicesUrl = "https://ivy-sliplane-management.sliplane.app/";
@@ -333,7 +413,11 @@ public class TendrilDeployView : ViewBase
             .Outline().Large().BorderRadius(BorderRadius.Full);
         var manageFloat = new FloatingPanel(manageBtn, Align.BottomRight).Offset(new Thickness(0, 0, 20, 10));
 
-        return new Fragment(Layout.Center() | card, manageFloat);
+        return new Fragment(
+            Layout.TopCenter()
+                .Padding(new Thickness(0, 12, 0, 0))
+                | pageColumn,
+            manageFloat);
     }
 
     private static string? SecretPrefill(IConfiguration c, string key)

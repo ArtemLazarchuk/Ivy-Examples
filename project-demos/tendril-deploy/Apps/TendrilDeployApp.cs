@@ -5,7 +5,7 @@ using TendrilDeploy.Models;
 using TendrilDeploy.Services;
 
 /// <summary>
-/// One-click Tendril deploy to Sliplane from Git (default fork with <c>.github/docker/Dockerfile.tendril</c>).
+/// Tendril deploy wizard: (1) Sliplane server + service name, (2) optional API secrets, then deploy + status.
 /// <c>?repo=</c> is captured by <see cref="RepoCaptureFilter"/> the same way as sliplane-deploy.
 /// </summary>
 [App(
