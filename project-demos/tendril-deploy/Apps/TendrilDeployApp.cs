@@ -5,7 +5,7 @@ using TendrilDeploy.Models;
 using TendrilDeploy.Services;
 
 /// <summary>
-/// Tendril deploy wizard: (1) Sliplane server + service name, (2) optional API secrets, then deploy + status.
+/// Tendril deploy wizard: (1) server + service name → (2) optional API secrets → (3) optional workspace repos to clone under <c>TENDRIL_HOME</c>, then deploy + status.
 /// <c>?repo=</c> is captured by <see cref="RepoCaptureFilter"/> the same way as sliplane-deploy.
 /// </summary>
 [App(
