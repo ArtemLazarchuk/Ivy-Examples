@@ -48,6 +48,18 @@ public class TendrilDeployFormModel
     public string? Cmd { get; set; }
 }
 
+public class TendrilBasicAuthFormModel
+{
+    [Display(Name = "Username", Prompt = "e.g. operator")]
+    [Required(ErrorMessage = "Username is required")]
+    public string Username { get; set; } = "";
+
+    [Display(Name = "Password")]
+    [Required(ErrorMessage = "Password is required")]
+    [MinLength(8, ErrorMessage = "Password must be at least 8 characters")]
+    public string Password { get; set; } = "";
+}
+
 public class TendrilDeployView : ViewBase
 {
     private readonly string _apiToken;
@@ -101,6 +113,10 @@ public class TendrilDeployView : ViewBase
         var openAiKey = UseState<string?>(() => SecretPrefill(config, "TendrilDeploy:OpenAiApiKey"));
         var geminiKey = UseState<string?>(() => SecretPrefill(config, "TendrilDeploy:GeminiApiKey"));
 
+        var basicAuthModel = UseState(() => new TendrilBasicAuthFormModel());
+        var basicAuthValidationFailed = UseState(false);
+        var basicAuthStepError = UseState<string?>(() => null);
+
         var reloadCounter = UseState(0);
         var stepIndex = UseState(0);
         /// <summary>
@@ -127,6 +143,12 @@ public class TendrilDeployView : ViewBase
                 m => m.AutoDeploy, m => m.NetworkPublic, m => m.NetworkProtocol,
                 m => m.Healthcheck, m => m.Cmd)
             .Required(m => m.ProjectId, m => m.Name, m => m.ServerId, m => m.GitRepo));
+
+        var (onBasicAuthSubmit, basicAuthFormView, basicAuthValidationView, _) = UseForm(() => basicAuthModel
+            .ToForm("Basic auth")
+            .Builder(m => m.Password,
+                s => s.ToPasswordInput(placeholder: $"At least {TendrilBasicAuthBootstrap.MinPasswordLength} characters"))
+            .Required(m => m.Username, m => m.Password));
 
         QueryResult<Option<string>[]> QueryServers(IViewContext ctx, string q) =>
             ctx.UseQuery<Option<string>[], (string, string, int)>(
@@ -168,6 +190,7 @@ public class TendrilDeployView : ViewBase
         async ValueTask HandleDeploy()
         {
             deployError.Set(null);
+            basicAuthStepError.Set(null);
             deployedService.Set(null);
             validationFailed.Set(false);
             var m = validatedDeployForm.Value;
@@ -198,6 +221,21 @@ public class TendrilDeployView : ViewBase
             var openAi = (openAiKey.Value ?? "").Trim();
             var gemini = (geminiKey.Value ?? "").Trim();
 
+            (string Users, string HashSecret, string JwtSecret) basicAuthEnv;
+            try
+            {
+                basicAuthEnv = TendrilBasicAuthBootstrap.BuildSecrets(
+                    basicAuthModel.Value.Username ?? "", basicAuthModel.Value.Password ?? "");
+            }
+            catch (ArgumentException ex)
+            {
+                deployError.Set(ex.Message);
+                basicAuthStepError.Set(ex.Message);
+                basicAuthValidationFailed.Set(true);
+                stepIndex.Set(3);
+                return;
+            }
+
             isDeploying.Set(true);
             try
             {
@@ -226,6 +264,12 @@ public class TendrilDeployView : ViewBase
                     envVars.Add(new EnvironmentVariable("OPENAI_API_KEY", openAi, Secret: true));
                 if (gemini.Length > 0)
                     envVars.Add(new EnvironmentVariable("GEMINI_API_KEY", gemini, Secret: true));
+                envVars.Add(new EnvironmentVariable("BasicAuth__Users", basicAuthEnv.Users, Secret: true));
+                envVars.Add(new EnvironmentVariable("BasicAuth__HashSecret", basicAuthEnv.HashSecret,
+                    Secret: true));
+                envVars.Add(new EnvironmentVariable("BasicAuth__JwtSecret", basicAuthEnv.JwtSecret,
+                    Secret: true));
+
                 envVars.Add(new EnvironmentVariable("PORT", port, Secret: false));
                 envVars.Add(new EnvironmentVariable("TENDRIL_HOME", home, Secret: false));
                 foreach (var ev in cloneEnvVars)
@@ -323,11 +367,33 @@ public class TendrilDeployView : ViewBase
             | openAiExpandable
             | geminiExpandable;
 
+        var basicAuthHintCallout = new Callout(
+            Text.Markdown(
+                """
+                These secrets are added to the **Sliplane service you create** (the repo you deploy), **not** this deploy wizard.
+                We set `BasicAuth__Users`, `BasicAuth__HashSecret`, and `BasicAuth__JwtSecret` on that service.
+
+                For login on the deployed app, its `Program.cs` must call `server.UseAuth<BasicAuthProvider>()`.
+                """.ReplaceLineEndings("\n")),
+            "Basic authentication",
+            CalloutVariant.Info);
+
+        object basicAuthSections = Layout.Vertical().Gap(3).Width(Size.Full())
+            | basicAuthHintCallout
+            | basicAuthFormView
+            | (basicAuthValidationFailed.Value
+                ? new Callout(basicAuthValidationView, "Please fill required auth fields", CalloutVariant.Error)
+                : new Empty())
+            | (basicAuthStepError.Value != null
+                ? new Callout(basicAuthStepError.Value, variant: CalloutVariant.Error)
+                : new Empty());
+
         var stepperItems = new[]
         {
             new StepperItem("1", stepIndex.Value > 0 ? Icons.Check : null, "Welcome", "Server & name"),
             new StepperItem("2", stepIndex.Value > 1 ? Icons.Check : null, "Secrets", "API keys"),
-            new StepperItem("3", deployedService.Value != null ? Icons.Check : null, "Repositories", "Workspaces"),
+            new StepperItem("3", stepIndex.Value > 2 ? Icons.Check : null, "Repositories", "Workspaces"),
+            new StepperItem("4", deployedService.Value != null ? Icons.Check : null, "Login", "Basic auth"),
         };
 
         ValueTask OnStepperSelect(Event<Stepper, int> e)
@@ -403,8 +469,10 @@ public class TendrilDeployView : ViewBase
                 | Text.H1("Welcome to Ivy Tendril").Align(TextAlignment.Center),
             1 => Layout.Vertical().Gap(2).AlignContent(Align.Center)
                 | Text.H1("API keys").Align(TextAlignment.Center),
-            _ => Layout.Vertical().Gap(2).AlignContent(Align.Center)
+            2 => Layout.Vertical().Gap(2).AlignContent(Align.Center)
                 | Text.H1("Repositories").Align(TextAlignment.Center),
+            _ => Layout.Vertical().Gap(2).AlignContent(Align.Center)
+                | Text.H1("Protect your deployment").Align(TextAlignment.Center),
         };
 
         object stepBody = stepIndex.Value switch
@@ -416,9 +484,11 @@ public class TendrilDeployView : ViewBase
             1 => Layout.Vertical().Gap(4).Width(Size.Full())
                 | secretsHintCallout
                 | agentSections,
-            _ => Layout.Vertical().Gap(4).Width(Size.Full())
+            2 => Layout.Vertical().Gap(4).Width(Size.Full())
                 | reposHintCallout
                 | repoSections,
+            _ => Layout.Vertical().Gap(4).Width(Size.Full())
+                | basicAuthSections,
         };
 
         object footerRow = stepIndex.Value switch
@@ -456,10 +526,11 @@ public class TendrilDeployView : ViewBase
                     .Width(Size.Fraction(0.31f))
                     .OnClick(_ =>
                     {
+                        basicAuthStepError.Set(null);
                         stepIndex.Set(2);
                         return ValueTask.CompletedTask;
                     }),
-            _ => Layout.Horizontal().Width(Size.Full()).Gap(4)
+            2 => Layout.Horizontal().Width(Size.Full()).Gap(4)
                 | new Button("Back")
                     .Icon(Icons.ChevronLeft)
                     .Variant(ButtonVariant.Outline)
@@ -472,6 +543,31 @@ public class TendrilDeployView : ViewBase
                         return ValueTask.CompletedTask;
                     })
                 | new Spacer()
+                | new Button("Continue")
+                    .Icon(Icons.ChevronRight, Align.Right)
+                    .Primary()
+                    .Large()
+                    .BorderRadius(BorderRadius.Full)
+                    .Width(Size.Fraction(0.31f))
+                    .OnClick(async _ =>
+                    {
+                        basicAuthValidationFailed.Set(false);
+                        stepIndex.Set(3);
+                        await Task.CompletedTask;
+                    }),
+            _ => Layout.Horizontal().Width(Size.Full()).Gap(4)
+                | new Button("Back")
+                    .Icon(Icons.ChevronLeft)
+                    .Variant(ButtonVariant.Outline)
+                    .Large()
+                    .BorderRadius(BorderRadius.Full)
+                    .Width(Size.Fraction(0.31f))
+                    .OnClick(_ =>
+                    {
+                        stepIndex.Set(2);
+                        return ValueTask.CompletedTask;
+                    })
+                | new Spacer()
                 | new Button("Deploy")
                     .Icon(Icons.Rocket, Align.Right)
                     .Primary()
@@ -480,7 +576,18 @@ public class TendrilDeployView : ViewBase
                     .Width(Size.Fraction(0.31f))
                     .Loading(loading || isDeploying.Value)
                     .Disabled(loading || isDeploying.Value)
-                    .OnClick(async _ => await HandleDeploy()),
+                    .OnClick(async _ =>
+                    {
+                        basicAuthStepError.Set(null);
+                        basicAuthValidationFailed.Set(false);
+                        if (!await onBasicAuthSubmit())
+                        {
+                            basicAuthValidationFailed.Set(true);
+                            return;
+                        }
+
+                        await HandleDeploy();
+                    }),
         };
 
         var stepperRow = Layout.Vertical().Width(Size.Full()).AlignContent(Align.Center)
