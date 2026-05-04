@@ -347,16 +347,22 @@ public class TendrilDeployView : ViewBase
 
         var reposHintCallout = new Callout(
             Text.Markdown(
-                "**GitHub only:** each row clones with **`git clone --depth 1`** into **`$TENDRIL_HOME/repos/&lt;owner&gt;/&lt;repo&gt;`** (path parsed from your URL). "
-                    + "**Default branch** on the remote. For private repos, set **`GITHUB_TOKEN`** on the Secrets step."),
+                """
+                Each filled row is one repo cloned when the container starts. In Tendril project settings, **Your repository folder** must be the **path inside the container** (the folder that contains `.git`), not the clone URL.
+
+                **Example**
+
+                - `TENDRIL_HOME` is `/data/tendril`
+                - This row is `https://github.com/acme/hello-world`
+                - After startup the repo is at `/data/tendril/repos/acme/hello-world`
+                - So in **Your repository folder** enter: `/data/tendril/repos/acme/hello-world`
+                """.ReplaceLineEndings("\n")),
             "Repositories",
             CalloutVariant.Info);
 
         object repoSections = Layout.Vertical().Gap(4).Width(Size.Full())
             | Text.H4("Repositories")
-            | Text.Muted(
-                "One GitHub clone URL per row (HTTPS or SSH). Leave a row empty if you do not need that clone. "
-                    + "Use Add for more repositories.")
+            | Text.Block("One URL per row. Leave empty to skip. Add adds another row.")
             | (Layout.Vertical().Gap(2).Width(Size.Full())
                 | repoCloneRows.Value.Select(e => (object)new TendrilBootstrapRepoRowView(e.Id, repoCloneRows))
                     .ToArray())
