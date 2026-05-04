@@ -296,6 +296,7 @@
       "tags": [
         "Ivy.Analyser",
         "Ivy.Auth.Sliplane",
+        "YamlDotNet",
         "demo"
       ]
     },
@@ -344,6 +345,17 @@
         "Charts",
         "SQL",
         "Data Warehouse"
+      ]
+    },
+    {
+      "name": "Tendril on Sliplane (demo)",
+      "description": "",
+      "githubLink": "https://github.com/Ivy-Interactive/Ivy-Examples/tree/main/project-demos/tendril-deploy",
+      "deploymentLink": "ivy-projectdemos-tendril-deploy.sliplane.app",
+      "tags": [
+        "Ivy.Analyser",
+        "Ivy.Auth.Sliplane",
+        "demo"
       ]
     }
   ],
