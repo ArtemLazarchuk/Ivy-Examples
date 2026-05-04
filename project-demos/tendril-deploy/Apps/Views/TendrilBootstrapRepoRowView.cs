@@ -38,23 +38,23 @@ internal sealed class TendrilBootstrapRepoRowView : ViewBase
 
         var moreThanOne = _repos.Value.Count > 1;
 
-        return Layout.Vertical().Gap(1).Width(Size.Full())
-            | Text.Muted("GitHub URL")
-            | (Layout.Horizontal().Gap(1).Center().Width(Size.Full())
-                | (Layout.Vertical().Width(Size.Grow())
-                    | cloneUrl.ToTextInput()
-                        .Prefix(Icons.Github)
-                        .Placeholder("https://github.com/org/repository.git")
-                        .Width(Size.Full()))
-                | new Button().Icon(Icons.Trash2).Variant(ButtonVariant.Ghost).Large()
-                    .OnClick(_ =>
-                    {
-                        if (!moreThanOne)
-                            cloneUrl.Set("");
-                        else
-                            _repos.Set(list => list.Where(e => e.Id != _rowId).ToList());
+        // Label lives once on the parent step (TendrilDeployView); rows are only input + remove.
+        return Layout.Horizontal().Gap(1).Center().Width(Size.Full())
+            | (Layout.Vertical().Width(Size.Grow())
+                | cloneUrl.ToTextInput()
+                    .Prefix(Icons.Github)
+                    .Placeholder("https://github.com/org/repository.git")
+                    .Width(Size.Full()))
+            | new Button().Icon(Icons.Trash2).Variant(ButtonVariant.Ghost).Large()
+                .Tooltip("Remove this row")
+                .OnClick(_ =>
+                {
+                    if (!moreThanOne)
+                        cloneUrl.Set("");
+                    else
+                        _repos.Set(list => list.Where(e => e.Id != _rowId).ToList());
 
-                        return ValueTask.CompletedTask;
-                    }));
+                    return ValueTask.CompletedTask;
+                });
     }
 }

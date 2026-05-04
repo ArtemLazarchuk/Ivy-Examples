@@ -354,8 +354,10 @@ public class TendrilDeployView : ViewBase
 
         object repoSections = Layout.Vertical().Gap(4).Width(Size.Full())
             | Text.H4("Repositories")
-            | Text.Muted("Enter only HTTPS or SSH GitHub repository URLs — leave rows blank if you skip this step.")
-            | (Layout.Vertical().Gap(3).Width(Size.Full())
+            | Text.Muted(
+                "One GitHub clone URL per row (HTTPS or SSH). Leave a row empty if you do not need that clone. "
+                    + "Use Add for more repositories.")
+            | (Layout.Vertical().Gap(2).Width(Size.Full())
                 | repoCloneRows.Value.Select(e => (object)new TendrilBootstrapRepoRowView(e.Id, repoCloneRows))
                     .ToArray())
             | new Button("Add").Icon(Icons.Plus).Outline()
