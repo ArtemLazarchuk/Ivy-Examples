@@ -2,6 +2,7 @@ using Ivy.Auth.Sliplane;
 using TendrilDeploy.Api;
 using TendrilDeploy.Apps;
 using TendrilDeploy.Services;
+using TendrilDeploy;
 
 CultureInfo.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-US");
 
@@ -53,9 +54,17 @@ server.AddConnectionsFromAssembly();
 
 server.UseAuth<SliplaneAuthProvider>();
 
+var cfg = server.Configuration;
 var appShellSettings = new AppShellSettings()
     .DefaultApp<TendrilDeployApp>()
-    .UseTabs(preventDuplicates: true);
+    .UseTabs(preventDuplicates: true)
+    .UseFooterMenuItemsTransformer((items, navigator) =>
+    {
+        var list = items.ToList();
+        list.Insert(0, MenuItem.Default("API documentation").Icon(Icons.BookOpen).OnSelect(() =>
+            navigator.Navigate(TendrilDocsLink.ResolveScalarUrl(cfg))));
+        return list;
+    });
 server.UseAppShell(appShellSettings);
 
 await server.RunAsync();
