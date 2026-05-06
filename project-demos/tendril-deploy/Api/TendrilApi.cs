@@ -79,6 +79,7 @@ public static class TendrilApi
         // ── Health ──────────────────────────────────────────────────────
         app.MapGet("/api/v1/health", () => Results.Ok(new { status = "ok" }))
             .WithName("Health")
+            .WithTags("TendrilApi")
             .WithSummary("Health check")
             .WithDescription("Returns 200 OK when the API is running. No authentication required.");
 

@@ -37,11 +37,26 @@ server.Services.AddOpenApi("v1", options =>
 {
     options.AddDocumentTransformer((doc, _, _) =>
     {
-        doc.Info.Title   = "Tendril Deploy API";
-        doc.Info.Version = "v1";
+        doc.Info.Title       = "Tendril Deploy API";
+        doc.Info.Version     = "v1";
         doc.Info.Description =
             "Programmatic Tendril instance deployment on Sliplane. " +
             "Authenticate via the X-Api-Key header (set TendrilDeploy:ApiKey in config).";
+
+        // Show only our endpoints — remove everything Ivy registers internally.
+        foreach (var (path, item) in doc.Paths.ToList())
+        {
+            var isTendrilApi = item.Operations.Values.Any(op =>
+                op.Tags?.Any(t => t.Name == "TendrilApi") == true);
+            if (!isTendrilApi)
+                doc.Paths.Remove(path);
+        }
+        if (doc.Tags != null)
+        {
+            var keep = doc.Tags.Where(t => t.Name == "TendrilApi").ToList();
+            doc.Tags.IntersectWith(keep);
+        }
+
         return Task.CompletedTask;
     });
 });
