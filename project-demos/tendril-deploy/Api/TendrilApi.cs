@@ -10,7 +10,9 @@ using TendrilDeploy.Services;
 
 /// <summary>
 /// Plugs Tendril API routes + Scalar docs into the pipeline via <see cref="IStartupFilter"/>.
-/// Must run before Ivy's middleware, which would otherwise intercept every request.
+/// Branches <c>/api</c>, <c>/openapi</c>, and <c>/swagger</c> before Ivy's SPA middleware (otherwise
+/// <c>/api/v1/...</c> returns <c>index.html</c>). Ivy's startup <see cref="IApplicationBuilder"/> is not
+/// always an <see cref="IEndpointRouteBuilder"/>, so register REST routes inside <c>MapWhen(/api)</c>.
 /// </summary>
 public sealed class TendrilApiStartupFilter : IStartupFilter
 {
@@ -18,9 +20,15 @@ public sealed class TendrilApiStartupFilter : IStartupFilter
     {
         return app =>
         {
-            // Register REST API endpoints in the main routing table.
-            if (app is IEndpointRouteBuilder erb)
-                TendrilApi.MapRoutes(erb);
+            // Branch /api (and docs) BEFORE Ivy's SPA middleware — otherwise /api returns index.html.
+            // Ivy's IApplicationBuilder is not always IEndpointRouteBuilder, so MapRoutes on `app` can no-op.
+            app.MapWhen(
+                ctx => ctx.Request.Path.StartsWithSegments("/api"),
+                branch =>
+                {
+                    branch.UseRouting();
+                    branch.UseEndpoints(ep => TendrilApi.MapRoutes(ep));
+                });
 
             // Branch /openapi and /swagger BEFORE Ivy's middleware intercepts them.
             app.MapWhen(
