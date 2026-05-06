@@ -40,8 +40,10 @@ server.Services.AddOpenApi("v1", options =>
         doc.Info.Title       = "Tendril Deploy API";
         doc.Info.Version     = "v1";
         doc.Info.Description =
-            "Programmatic Tendril instance deployment on Sliplane. " +
-            "Authenticate via the X-Api-Key header (set TendrilDeploy:ApiKey in config).";
+            "Programmatic Tendril instance deployment on Sliplane.\n\n" +
+            "**Authentication** is optional — if `TendrilDeploy:ApiKey` is set in config, " +
+            "send it via `X-Api-Key`. Endpoints that query Sliplane also require `X-Sliplane-Token` " +
+            "(Sliplane → Team Settings → API Tokens).";
 
         // Show only our endpoints — remove everything Ivy registers internally.
         foreach (var (path, item) in doc.Paths.ToList())

@@ -83,8 +83,8 @@ public static class TendrilApi
             .WithSummary("Health check")
             .WithDescription("Returns 200 OK when the API is running. No authentication required.");
 
-        const string apiKeyNote = "\n\n**Headers required:** `X-Api-Key` — must match `TendrilDeploy:ApiKey` in config.";
-        const string sliplaneNote = "\n\n**Headers required:** `X-Api-Key` + `X-Sliplane-Token` (Sliplane → Team Settings → API Tokens).";
+        const string apiKeyNote = "\n\n**Auth:** Include `X-Api-Key` if `TendrilDeploy:ApiKey` is set in config. Without config, the API is open.";
+        const string sliplaneNote = "\n\n**Auth:** Include `X-Sliplane-Token` (Sliplane → Team Settings → API Tokens). `X-Api-Key` is required only if `TendrilDeploy:ApiKey` is configured.";
 
         // ── Servers ─────────────────────────────────────────────────────
         app.MapGet("/api/v1/servers", ListServersAsync)
@@ -200,21 +200,18 @@ public static class TendrilApi
     {
         result = null;
         var configuredKey = cfg[ApiKeyConfigKey]?.Trim();
-        if (string.IsNullOrEmpty(configuredKey))
-        {
-            result = Results.Json(
-                new ErrorResponse { Error = "API is disabled. Set TendrilDeploy:ApiKey in configuration to enable it." },
-                statusCode: StatusCodes.Status503ServiceUnavailable);
-            return true;
-        }
 
-        if (!ctx.Request.Headers.TryGetValue(ApiKeyHeader, out var supplied)
-            || !string.Equals(supplied.ToString().Trim(), configuredKey, StringComparison.Ordinal))
+        // If TendrilDeploy:ApiKey is configured, enforce it; otherwise the API is open.
+        if (!string.IsNullOrEmpty(configuredKey))
         {
-            result = Results.Json(
-                new ErrorResponse { Error = "Invalid or missing X-Api-Key header." },
-                statusCode: StatusCodes.Status401Unauthorized);
-            return true;
+            if (!ctx.Request.Headers.TryGetValue(ApiKeyHeader, out var supplied)
+                || !string.Equals(supplied.ToString().Trim(), configuredKey, StringComparison.Ordinal))
+            {
+                result = Results.Json(
+                    new ErrorResponse { Error = "Invalid or missing X-Api-Key header." },
+                    statusCode: StatusCodes.Status401Unauthorized);
+                return true;
+            }
         }
 
         if (requireSliplane && string.IsNullOrWhiteSpace(ctx.Request.Headers[SliplaneKeyHeader]))
