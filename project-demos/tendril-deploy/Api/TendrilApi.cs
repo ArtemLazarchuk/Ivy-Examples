@@ -38,6 +38,9 @@ public sealed class TendrilApiStartupFilter : IStartupFilter
                     branch.UseRouting();
                     branch.UseEndpoints(ep => ep.MapScalarApiReference("/swagger/v1", options =>
                     {
+                        // OpenAPI lives at /openapi/v1.json (MapOpenApi). Scalar is under /swagger/v1/, so a
+                        // relative default would wrongly request /swagger/v1/openapi/v1.json (404).
+                        options.WithOpenApiRoutePattern("/openapi/{documentName}.json");
                         // Keep examples in shell/curl instead of Python.
                         options.WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl);
                     }));
