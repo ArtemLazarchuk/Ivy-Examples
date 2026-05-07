@@ -149,10 +149,10 @@ app.Configure(config =>
         });
     });
 
-    // ── NuGet stats (IvyInsights) ─────────────────────────────────────
+    // ── NuGet ─────────────────────────────────────────────────────────
     config.AddBranch("nuget", nuget =>
     {
-        nuget.SetDescription("NuGet package statistics (IvyInsights)");
+        nuget.SetDescription("Manage NuGet package statistics");
         nuget.AddCommand<NuGetSummaryCommand>("summary")
             .WithDescription("Overall stats summary");
         nuget.AddCommand<NuGetStarsCommand>("stars")
