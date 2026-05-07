@@ -1,3 +1,5 @@
+using Ivy.Cli.Commands.Config;
+
 using Ivy.Cli.Commands.Sliplane;
 using Ivy.Cli.Commands.Sliplane.Credentials;
 using Ivy.Cli.Commands.Sliplane.OAuth;
@@ -13,6 +15,22 @@ app.Configure(config =>
 {
     config.SetApplicationName("ivy");
     config.SetApplicationVersion("0.1.0");
+
+    // ── Config ────────────────────────────────────────────────────────
+    config.AddBranch("config", cfg =>
+    {
+        cfg.SetDescription("Manage saved CLI configuration (~/.ivy/config.json)");
+        cfg.AddCommand<ConfigListCommand>("list")
+            .WithDescription("Show all saved config values");
+        cfg.AddCommand<ConfigGetCommand>("get")
+            .WithDescription("Get a saved config value");
+        cfg.AddCommand<ConfigSetCommand>("set")
+            .WithDescription("Save a config value (e.g. ivy config set sliplane_api_key sk-xxx)");
+        cfg.AddCommand<ConfigUnsetCommand>("unset")
+            .WithDescription("Remove a single config value (e.g. ivy config unset sliplane_api_key)");
+        cfg.AddCommand<ConfigClearCommand>("clear")
+            .WithDescription("Delete all saved config from ~/.ivy/config.json");
+    });
 
     // ── Sliplane: identity ─────────────────────────────────────────────
     config.AddCommand<MeCommand>("me")
