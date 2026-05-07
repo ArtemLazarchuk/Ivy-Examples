@@ -138,7 +138,7 @@ public sealed class DeployTendrilCommand : AsyncCommand<DeployTendrilCommand.Set
         AnsiConsole.MarkupLine("Deploying...");
         var result = await tendrilClient.PostAsync("api/v1/tendrils", body);
         YamlOutput.Write(result);
-        AnsiConsole.MarkupLine("[green]Done![/] Use 'ivy tendrils status' to check progress.");
+        AnsiConsole.MarkupLine("[green]Done![/] Use 'ivy tendril status' to check progress.");
         return 0;
     }
 
