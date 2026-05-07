@@ -64,7 +64,7 @@ public sealed class GetTendrilStatusCommand : AsyncCommand<GetTendrilStatusComma
 
             // Fetch services for each project in parallel
             var sliplaneClient = new SliplaneClient(sliplaneToken);
-            var allServices = new List<(string ProjectId, string ProjectName, string ServiceId, string ServiceName, string Status)>();
+            var allServices = new List<(string ProjectId, string ProjectName, string ServiceId, string ServiceName, string Status, DateTimeOffset UpdatedAt)>();
 
             foreach (var project in projects)
             {
@@ -76,10 +76,11 @@ public sealed class GetTendrilStatusCommand : AsyncCommand<GetTendrilStatusComma
                     var servicesDoc = await sliplaneClient.GetAsync($"projects/{pid}/services");
                     foreach (var svc in servicesDoc.RootElement.EnumerateArray())
                     {
-                        var sid    = svc.GetProperty("id").GetString()!;
-                        var sname  = svc.GetProperty("name").GetString()!;
+                        var sid = svc.GetProperty("id").GetString()!;
+                        var sname = svc.GetProperty("name").GetString()!;
                         var status = svc.TryGetProperty("status", out var st) ? st.GetString() ?? "unknown" : "unknown";
-                        allServices.Add((pid, pname, sid, sname, status));
+                        var updatedAt = ParseServiceUpdatedAt(svc);
+                        allServices.Add((pid, pname, sid, sname, status, updatedAt));
                     }
                 }
                 catch { /* skip projects we can't access */ }
@@ -90,6 +91,12 @@ public sealed class GetTendrilStatusCommand : AsyncCommand<GetTendrilStatusComma
                 AnsiConsole.MarkupLine("[yellow]No services found across Tendril projects.[/]");
                 return 1;
             }
+
+            // Show most recently updated services first.
+            allServices = allServices
+                .OrderByDescending(s => s.UpdatedAt)
+                .ThenBy(s => s.ServiceName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
             // Interactive picker
             var choice = AnsiConsole.Prompt(
@@ -150,4 +157,28 @@ public sealed class GetTendrilStatusCommand : AsyncCommand<GetTendrilStatusComma
         "error"    => "red",
         _          => "dim"
     };
+
+    private static DateTimeOffset ParseServiceUpdatedAt(JsonElement service)
+    {
+        // Sliplane API fields may vary by version/casing.
+        if (TryParseDate(service, "updated_at", out var updatedAt) ||
+            TryParseDate(service, "updatedAt", out updatedAt) ||
+            TryParseDate(service, "created_at", out updatedAt) ||
+            TryParseDate(service, "createdAt", out updatedAt))
+        {
+            return updatedAt;
+        }
+
+        return DateTimeOffset.MinValue;
+    }
+
+    private static bool TryParseDate(JsonElement obj, string property, out DateTimeOffset value)
+    {
+        value = default;
+        if (!obj.TryGetProperty(property, out var raw))
+            return false;
+
+        return raw.ValueKind == JsonValueKind.String &&
+               DateTimeOffset.TryParse(raw.GetString(), out value);
+    }
 }
