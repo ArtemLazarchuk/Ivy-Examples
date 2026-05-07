@@ -86,22 +86,7 @@ public sealed class DeployTendrilCommand : AsyncCommand<DeployTendrilCommand.Set
         var openAiKey    = PromptOptionalSecret("OpenAI API key [dim](optional)[/]:");
         var geminiKey    = PromptOptionalSecret("Gemini API key [dim](optional)[/]:");
 
-        // ── 6. Repos ───────────────────────────────────────────────────────
-        var repos = new List<string>();
-        if (Confirm("Clone GitHub repos into container?"))
-        {
-            while (true)
-            {
-                var repo = AnsiConsole.Prompt(
-                    new TextPrompt<string>("  Repo URL [dim](empty to finish)[/]:")
-                        .PromptStyle("green")
-                        .AllowEmpty());
-                if (string.IsNullOrWhiteSpace(repo)) break;
-                repos.Add(repo);
-            }
-        }
-
-        // ── 7. Volume ──────────────────────────────────────────────────────
+        // ── 6. Volume ──────────────────────────────────────────────────────
         string? volumeId = null;
         if (Confirm("Attach a persistent volume?"))
         {
@@ -132,8 +117,7 @@ public sealed class DeployTendrilCommand : AsyncCommand<DeployTendrilCommand.Set
         if (githubToken  is not null) body["gitHubToken"]          = githubToken;
         if (openAiKey    is not null) body["openAiApiKey"]         = openAiKey;
         if (geminiKey    is not null) body["geminiApiKey"]         = geminiKey;
-        if (repos.Count > 0)          body["repos"]                = repos.ToArray();
-        if (volumeId     is not null) body["volumeId"]             = volumeId;
+        if (volumeId is not null) body["volumeId"] = volumeId;
 
         AnsiConsole.MarkupLine("Deploying...");
         var result = await tendrilClient.PostAsync("api/v1/tendrils", body);
