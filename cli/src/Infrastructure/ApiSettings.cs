@@ -51,15 +51,11 @@ public class TendrilApiSettings : CommandSettings
 
     public TendrilClient CreateTendrilClient()
     {
-        var url = ConfigStore.Resolve(
-            flagValue: TendrilUrl,
-            envVar:    Environment.GetEnvironmentVariable("TENDRIL_BASE_URL"),
-            configKey: "tendril_base_url",
-            label:     "Tendril base URL",
-            hint:      "e.g. [yellow]https://ivy-tendril-deployment.sliplane.app[/]",
-            isSecret:  false);
+        var url = TendrilUrl
+            ?? Environment.GetEnvironmentVariable("TENDRIL_BASE_URL")
+            ?? ConfigStore.Get("tendril_base_url")
+            ?? "https://ivy-tendril-deployment.sliplane.app";
 
-        // API key is optional for Tendril — don't prompt, just check flag/env/config
         var key = TendrilApiKey
             ?? Environment.GetEnvironmentVariable("TENDRIL_API_KEY")
             ?? ConfigStore.Get("tendril_api_key");
