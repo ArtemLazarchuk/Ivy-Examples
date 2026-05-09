@@ -267,9 +267,17 @@ public class TendrilDeployView : ViewBase
                     ? TendrilCloneBootstrap.BuildServiceCmdWrapped()
                     : null;
 
+                var volumeId = m.VolumeId?.Trim();
+                if (string.IsNullOrWhiteSpace(volumeId))
+                {
+                    var volumeName = TendrilDeployService.AutoDataVolumeName(m.Name);
+                    var created = await client.CreateVolumeAsync(_apiToken, m.ServerId, volumeName);
+                    volumeId = created.Id;
+                }
+
                 List<(string VolumeId, string MountPath)>? volumes = null;
-                if (!string.IsNullOrWhiteSpace(m.VolumeId))
-                    volumes = [(m.VolumeId.Trim(), home)];
+                if (!string.IsNullOrWhiteSpace(volumeId))
+                    volumes = [(volumeId, home)];
 
                 var service = await client.CreateServiceAsync(_apiToken, m.ProjectId,
                     ServiceRequestFactory.BuildCreateRequest(
